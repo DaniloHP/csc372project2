@@ -11,11 +11,16 @@ public class GrammarTests {
     void testMathGrammar() {
         var grammar = new MathGrammar();
         assertTrue(grammar.isValid("x"));
+        assertTrue(grammar.isValid("-1"));
         assertTrue(grammar.isValid("(1)"));
         assertTrue(grammar.isValid("(x)"));
+        assertTrue(grammar.isValid("___var_11_xy_9"));
         assertTrue(grammar.isValid("100"));
         assertTrue(grammar.isValid("1+1"));
-        assertTrue(grammar.isValid("1 + 1"));
+        assertTrue(grammar.isValid("1+-1"));
+        assertTrue(grammar.isValid("1 - 1"));
+        assertTrue(grammar.isValid("1 * -1"));
+        //        assertTrue(grammar.isValid("1 ^ 1"));
         assertTrue(grammar.isValid("1    / 1"));
         assertTrue(grammar.isValid("1/1/x/1"));
         assertTrue(grammar.isValid("100 mod 1000"));
@@ -26,6 +31,7 @@ public class GrammarTests {
         assertFalse(grammar.isValid("+"));
         assertFalse(grammar.isValid("1++1"));
         assertFalse(grammar.isValid("(1/5"));
+        assertFalse(grammar.isValid("0__bad_var_11_xx_1"));
         assertFalse(grammar.isValid("100.1 * 1, 90 */ 10"));
         assertFalse(grammar.isValid("100 mod (2 * (4/10)"));
     }

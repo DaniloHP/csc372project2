@@ -12,9 +12,9 @@ public class MathGrammar {
 
         // <as_expr>
         Rule addRule = new Rule("(.*)\\+(.*)", "ADDITION");
-        Rule addRuleRight = new Rule("(.*?)\\+(.*)", "ADDITION");
+        Rule addRuleRight = new Rule("(.*?)\\+(.*)", "ADDITION_RIGHT");
         Rule subRule = new Rule("(.*)-(.*)", "SUBTRACTION");
-        Rule subRuleRight = new Rule("(.*?)-(.*)", "SUBTRACTION");
+        Rule subRuleRight = new Rule("(.*?)-(.*)", "SUBTRACTION_RIGHT");
         Rule asDownRule = baseDownRule.clone();
         asDownRule.id += "_AS";
         GrammarLevel asExpr = new GrammarLevel(
@@ -26,11 +26,11 @@ public class MathGrammar {
         );
         // <mmd_expr>
         Rule mulRule = new Rule("(.*)\\*(.*)", "MULTIPLICATION");
-        Rule mulRuleRight = new Rule("(.*?)\\*(.*)", "MULTIPLICATION");
+        Rule mulRuleRight = new Rule("(.*?)\\*(.*)", "MULTIPLICATION_RIGHT");
         Rule divRule = new Rule("(.*)/(.*)", "DIVISION");
-        Rule divRuleRight = new Rule("(.*?)/(.*)", "DIVISION");
+        Rule divRuleRight = new Rule("(.*?)/(.*)", "DIVISION_RIGHT");
         Rule modRule = new Rule("(.*)mod(.*)", "MODULUS");
-        Rule modRuleRight = new Rule("(.*?)mod(.*)", "MODULUS");
+        Rule modRuleRight = new Rule("(.*?)mod(.*)", "MODULUS_RIGHT");
         Rule mmdDownRule = baseDownRule.clone();
         mmdDownRule.id += "_MMD";
         GrammarLevel mmdExpr = new GrammarLevel(
@@ -43,24 +43,25 @@ public class MathGrammar {
             modRuleRight
         );
         // <ex-expr>
-        Rule expRule = new Rule("(.*)^(.*)", "EXPONENTIATION");
-        Rule expRuleRight = new Rule("(.*?)^(.*)", "EXPONENTIATION");
+        Rule expRule = new Rule("(.*)\\^(.*)", "EXPONENTIATION");
+        Rule expRuleRight = new Rule("(.*?)\\^(.*)", "EXPONENTIATION_RIGHT");
         Rule expDownRule = baseDownRule.clone();
         expDownRule.id += "_ExP";
-        GrammarLevel exExpr = new GrammarLevel(expRule, expDownRule);
+        GrammarLevel exExpr = new GrammarLevel(expRule, expRuleRight, expDownRule);
         // <root>
         Rule varRule = new Rule("[a-zA-Z_]+[a-zA-Z_\\d]*", "VARIABLES");
         Rule intRule = new Rule("\\d+", "INTEGERS");
         Rule parenRule = new Rule("\\((.*)\\)", "PARENTHESES");
-        GrammarLevel rootExpr = new GrammarLevel(varRule, intRule, parenRule);
+        Rule negRule = new Rule("-(.*)", "UNARY_NEGATIVE");
+        GrammarLevel rootExpr = new GrammarLevel(varRule, intRule, parenRule, negRule);
 
         //// Populate the levels, bottom up
         // <root>
         parenRule.addChildren(1, asExpr);
+        negRule.addChildren(1, asExpr);
 
         // <ex_expr>
-        expRule.addChildren(1, exExpr);
-        expRule.addChildren(2, rootExpr);
+        populateBinaryRules(exExpr, rootExpr, expRule, expRuleRight);
         expDownRule.addChildren(1, rootExpr);
 
         // <mmd_expr>

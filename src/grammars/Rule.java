@@ -35,11 +35,8 @@ public class Rule implements Cloneable {
     }
 
     public boolean validate(CharSequence toCheck) {
-        if (toCheck.isEmpty()) {
-            return false;
-        }
         Matcher matcher = regex.matcher(toCheck);
-        if (matcher.matches()) {
+        if (!toCheck.isEmpty() && matcher.matches()) {
             if (children.length == 0) {
                 //it's a matching terminal
                 return true;
@@ -77,6 +74,6 @@ public class Rule implements Cloneable {
     }
 
     public String toString() {
-        return String.format("grammars.Rule %s", id);
+        return String.format("Rule %s", id);
     }
 }
