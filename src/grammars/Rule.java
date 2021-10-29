@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Rule implements Cloneable {
+
     private GrammarLevel[] children;
     private Pattern regex;
     private final int NUM_GROUPS;
@@ -48,10 +49,10 @@ public class Rule implements Cloneable {
                 int i = groupNum - 1;
                 String currGroup = matcher.group(groupNum).strip();
                 children[i].forEachRule(rule -> {
-                    if (rule.validate(currGroup)) {
-                        resultVector[i] = true;
-                    }
-                });
+                        if (rule.validate(currGroup)) {
+                            resultVector[i] = true;
+                        }
+                    });
             }
             return allTrue(resultVector);
         } else {

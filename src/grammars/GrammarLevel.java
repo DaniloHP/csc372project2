@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class GrammarLevel {
+
     List<Rule> rules;
 
     public GrammarLevel() {
@@ -28,9 +29,5 @@ public class GrammarLevel {
 
     public void forEachRule(Consumer<? super Rule> fn) {
         rules.forEach(fn);
-    }
-
-    public void addRule(Rule... rule) {
-        rules.addAll(List.of(rule));
     }
 }
