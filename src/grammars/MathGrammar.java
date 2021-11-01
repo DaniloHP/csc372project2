@@ -75,7 +75,7 @@ public class MathGrammar {
             divRuleRight,
             modRuleRight
         );
-        mmdDownRule.addChildren(1, rootExpr);
+        mmdDownRule.addChildren(1, exExpr);
 
         // <as_expr>
         populateBinaryRules(asExpr, mmdExpr, addRule, subRule, addRuleRight, subRuleRight);
