@@ -1,15 +1,11 @@
 package grammars;
 
-import java.util.*;
+import java.util.List;
 
-public class MathGrammar {
-
-    private final List<GrammarLevel> levels;
+public class MathGrammar extends Grammar {
 
     public MathGrammar() {
-        levels = new ArrayList<>();
-        Rule baseDownRule = new Rule("(.*)", "DOWN_RULE"); //used throughout
-
+        super();
         // <as_expr>
         Rule addRule = new Rule("(.*)\\+(.*)", "ADDITION");
         Rule addRuleRight = new Rule("(.*?)\\+(.*)", "ADDITION_RIGHT");
@@ -49,8 +45,6 @@ public class MathGrammar {
         expDownRule.id += "_ExP";
         GrammarLevel exExpr = new GrammarLevel(expRule, expRuleRight, expDownRule);
         // <root>
-        Rule varRule = new Rule("[a-zA-Z_]+[a-zA-Z_\\d]*", "VARIABLES");
-        Rule intRule = new Rule("\\d+", "INTEGERS");
         Rule parenRule = new Rule("\\((.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(.*)", "UNARY_NEGATIVE");
         GrammarLevel rootExpr = new GrammarLevel(varRule, intRule, parenRule, negRule);
@@ -81,16 +75,5 @@ public class MathGrammar {
         populateBinaryRules(asExpr, mmdExpr, addRule, subRule, addRuleRight, subRuleRight);
         asDownRule.addChildren(1, mmdExpr);
         levels.addAll(List.of(asExpr, mmdExpr, exExpr, rootExpr));
-    }
-
-    private void populateBinaryRules(GrammarLevel left, GrammarLevel right, Rule... rules) {
-        for (var rule : rules) {
-            rule.addChildren(1, left);
-            rule.addChildren(2, right);
-        }
-    }
-
-    public boolean isValid(CharSequence toCheck) {
-        return levels.get(0).validate(toCheck);
     }
 }

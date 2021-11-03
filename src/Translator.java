@@ -1,3 +1,4 @@
+import grammars.Grammar;
 import grammars.MathGrammar;
 
 public class Translator {
