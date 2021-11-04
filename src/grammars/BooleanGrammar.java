@@ -1,5 +1,6 @@
 package grammars;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BooleanGrammar extends Grammar {
@@ -10,21 +11,21 @@ public class BooleanGrammar extends Grammar {
      * @param mathEntryPoint The correct place to start parsing a full math
      *                       expression.
      */
-    public BooleanGrammar(GrammarLevel mathEntryPoint) {
+    public BooleanGrammar(List<Rule> mathEntryPoint) {
         super();
         //<or_expr>
         Rule orRule = new Rule("(.*) +or +(.*)", "OR");
         Rule orRuleRight = new Rule("(.*?) +or +(.*)", "OR_RIGHT");
         Rule orDownRule = baseDownRule.clone();
         orDownRule.id += "_OR";
-        GrammarLevel orExpr = new GrammarLevel(orRule, orRuleRight, orDownRule);
+        List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
 
         //<and_expr>
         Rule andRule = new Rule("(.*) +and +(.*)", "AND");
         Rule andRuleRight = new Rule("(.*?) +and +(.*)", "AND_RIGHT");
         Rule andDownRule = baseDownRule.clone();
         andDownRule.id += "_AND";
-        GrammarLevel andExpr = new GrammarLevel(andRule, andRuleRight, andDownRule);
+        List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
         Rule notRule = new Rule("not +(.*)");
@@ -32,12 +33,12 @@ public class BooleanGrammar extends Grammar {
         notDownRuleToRoot.id += "_TO_ROOT";
         Rule notDownRuleToCmp = baseDownRule.clone();
         notDownRuleToRoot.id += "_TO_CMP";
-        GrammarLevel notExpr = new GrammarLevel(notRule, notDownRuleToRoot, notDownRuleToCmp);
+        List<Rule> notExpr = new ArrayList<>(List.of(notRule, notDownRuleToRoot, notDownRuleToCmp));
 
         //<bool>
         Rule bool = new Rule("[TF]", "BOOL");
         Rule boolParenRule = new Rule("\\((.*)\\)", "PARENTHESES");
-        GrammarLevel boolRootExpr = new GrammarLevel(bool, varRule, boolParenRule);
+        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, varRule, boolParenRule));
 
         //<comparison>: !=, ==, <, <=, >, >=
         Rule notEqualRule = new Rule("(.*) +!= +(.*)", "NOT_EQUAL");
@@ -52,19 +53,21 @@ public class BooleanGrammar extends Grammar {
         Rule lteRuleRight = new Rule("(.*?) +<= +(.*)", "LTE_RIGHT");
         Rule gteRule = new Rule("(.*) +>= +(.*)", "GTE");
         Rule gteRuleRight = new Rule("(.*?) +>= +(.*)", "GTE_RIGHT");
-        GrammarLevel comparisonExpr = new GrammarLevel(
-            notEqualRule,
-            notEqualRuleRight,
-            equalRule,
-            equalRuleRight,
-            ltRule,
-            ltRuleRight,
-            gtRule,
-            gtRuleRight,
-            lteRule,
-            lteRuleRight,
-            gteRule,
-            gteRuleRight
+        List<Rule> comparisonExpr = new ArrayList<>(
+            List.of(
+                notEqualRule,
+                notEqualRuleRight,
+                equalRule,
+                equalRuleRight,
+                ltRule,
+                ltRuleRight,
+                gtRule,
+                gtRuleRight,
+                lteRule,
+                lteRuleRight,
+                gteRule,
+                gteRuleRight
+            )
         );
 
         //// Populate the levels, bottom up

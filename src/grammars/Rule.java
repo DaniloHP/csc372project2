@@ -1,11 +1,13 @@
 package grammars;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Rule implements Cloneable {
 
-    private GrammarLevel[] children;
+    private List<List<Rule>> children;
     private Pattern regex;
     private final int NUM_GROUPS;
     public String id; //for debugging
@@ -13,7 +15,7 @@ public class Rule implements Cloneable {
     public Rule(CharSequence regexStr) {
         regex = Pattern.compile(regexStr.toString());
         NUM_GROUPS = regex.matcher("").groupCount();
-        children = new GrammarLevel[NUM_GROUPS];
+        children = new ArrayList<>(NUM_GROUPS);
     }
 
     public Rule(CharSequence regexStr, String id) {
@@ -21,8 +23,13 @@ public class Rule implements Cloneable {
         this.id = id;
     }
 
-    public void addChildren(int group, GrammarLevel level) {
-        children[group - 1] = level;
+    public void addChildren(int group, List<Rule> level) {
+        assert group <= NUM_GROUPS;
+        while (children.size() < group) {
+            //grow array if necessary
+            children.add(null);
+        }
+        children.set(group - 1, level);
     }
 
     private boolean allTrue(boolean[] arr) {
@@ -37,7 +44,7 @@ public class Rule implements Cloneable {
     public boolean validate(CharSequence toCheck) {
         Matcher matcher = regex.matcher(toCheck);
         if (!toCheck.isEmpty() && matcher.matches()) {
-            if (children.length == 0) {
+            if (children.isEmpty()) {
                 //it's a matching terminal
                 return true;
             }
@@ -45,11 +52,12 @@ public class Rule implements Cloneable {
             for (int groupNum = 1; groupNum <= NUM_GROUPS; groupNum++) {
                 int i = groupNum - 1;
                 String currGroup = matcher.group(groupNum).strip();
-                children[i].forEachRule(rule -> {
-                        if (rule.validate(currGroup)) {
-                            resultVector[i] = true;
-                        }
-                    });
+                for (Rule rule : children.get(i)) {
+                    if (rule.validate(currGroup)) {
+                        resultVector[i] = true;
+                    }
+                    //cannot return false if the above isn't true.
+                }
             }
             return allTrue(resultVector);
         } else {
@@ -65,7 +73,7 @@ public class Rule implements Cloneable {
         try {
             Rule clone = (Rule) super.clone();
             clone.regex = this.regex;
-            clone.children = new GrammarLevel[NUM_GROUPS];
+            clone.children = new ArrayList<>(this.NUM_GROUPS);
             clone.id = this.id;
             return clone;
         } catch (CloneNotSupportedException e) {

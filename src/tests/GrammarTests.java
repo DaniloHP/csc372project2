@@ -59,14 +59,17 @@ public class GrammarTests {
         assertTrue(boolGrammar.isValid("x or (1 != 10)"));
         assertTrue(boolGrammar.isValid("x and y and z"));
         assertTrue(boolGrammar.isValid("(x + y * 2) == z"));
+        assertTrue(boolGrammar.isValid("(x and (z == 10)) and (y != 100 or l or 5 < x) or (T)"));
 
         assertFalse(boolGrammar.isValid("1 === 1"));
         assertFalse(boolGrammar.isValid("1 <== 1"));
         assertFalse(boolGrammar.isValid("1 <== 1 1"));
         assertFalse(boolGrammar.isValid("1 && 1"));
         assertFalse(boolGrammar.isValid("T and"));
+        assertFalse(boolGrammar.isValid("T and ()"));
         assertFalse(boolGrammar.isValid("(1 + 1 == 2))"));
         assertFalse(boolGrammar.isValid("not 1"));
         assertFalse(boolGrammar.isValid("1 = 10"));
+        assertFalse(boolGrammar.isValid("(x and (z == 10)) and () or (T)"));
     }
 }

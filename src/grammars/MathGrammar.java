@@ -1,5 +1,6 @@
 package grammars;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MathGrammar extends Grammar {
@@ -13,12 +14,8 @@ public class MathGrammar extends Grammar {
         Rule subRuleRight = new Rule("(.*?)-(.*)", "SUBTRACTION_RIGHT");
         Rule asDownRule = baseDownRule.clone();
         asDownRule.id += "_AS";
-        GrammarLevel asExpr = new GrammarLevel(
-            addRule,
-            subRule,
-            asDownRule,
-            addRuleRight,
-            subRuleRight
+        List<Rule> asExpr = new ArrayList<>(
+            List.of(addRule, subRule, asDownRule, addRuleRight, subRuleRight)
         );
         // <mmd_expr>
         Rule mulRule = new Rule("(.*)\\*(.*)", "MULTIPLICATION");
@@ -29,25 +26,27 @@ public class MathGrammar extends Grammar {
         Rule modRuleRight = new Rule("(.*?)mod(.*)", "MODULUS_RIGHT");
         Rule mmdDownRule = baseDownRule.clone();
         mmdDownRule.id += "_MMD";
-        GrammarLevel mmdExpr = new GrammarLevel(
-            mulRule,
-            divRule,
-            modRule,
-            mmdDownRule,
-            mulRuleRight,
-            divRuleRight,
-            modRuleRight
+        List<Rule> mmdExpr = new ArrayList<>(
+            List.of(
+                mulRule,
+                divRule,
+                modRule,
+                mmdDownRule,
+                mulRuleRight,
+                divRuleRight,
+                modRuleRight
+            )
         );
         // <ex-expr>
         Rule expRule = new Rule("(.*)\\^(.*)", "EXPONENTIATION");
         Rule expRuleRight = new Rule("(.*?)\\^(.*)", "EXPONENTIATION_RIGHT");
         Rule expDownRule = baseDownRule.clone();
-        expDownRule.id += "_ExP";
-        GrammarLevel exExpr = new GrammarLevel(expRule, expRuleRight, expDownRule);
+        expDownRule.id += "_EXP";
+        List<Rule> exExpr = new ArrayList<>(List.of(expRule, expRuleRight, expDownRule));
         // <root>
         Rule parenRule = new Rule("\\((.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(.*)", "UNARY_NEGATIVE");
-        GrammarLevel rootExpr = new GrammarLevel(varRule, intRule, parenRule, negRule);
+        List<Rule> rootExpr = new ArrayList<>(List.of(varRule, intRule, parenRule, negRule));
 
         //// Populate the levels, bottom up
         // <root>

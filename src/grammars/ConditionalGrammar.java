@@ -1,5 +1,8 @@
 package grammars;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ConditionalGrammar extends Grammar {
 
     public ConditionalGrammar() {
@@ -10,8 +13,8 @@ public class ConditionalGrammar extends Grammar {
         Rule elseRule = new Rule("else: +\\n(.*)", "ELSE_STATEMENT");
 
         //Grammar Levels for statements
-        GrammarLevel ifExpr = new GrammarLevel(ifRule);
-        GrammarLevel elfExpr = new GrammarLevel(elfRule);
-        GrammarLevel elseExpr = new GrammarLevel(elseRule);
+        List<Rule> ifExpr = new ArrayList<>(List.of(ifRule));
+        List<Rule> elfExpr = new ArrayList<>(List.of(elfRule));
+        List<Rule> elseExpr = new ArrayList<>(List.of(elseRule));
     }
 }
