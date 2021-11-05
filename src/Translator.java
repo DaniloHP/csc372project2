@@ -1,11 +1,11 @@
-import grammars.Grammar;
-import grammars.MathGrammar;
+import parser.Parser;
 
 public class Translator {
 
     public static void main(String[] args) {
-        var grammar = new MathGrammar();
-        var res = grammar.isValid("1+2+3/2");
-        System.out.println(res);
+        if (args.length != 1) {
+            System.err.println("Expected the filename of a Judo file.");
+        }
+        Parser parser = new Parser(args[1]);
     }
 }

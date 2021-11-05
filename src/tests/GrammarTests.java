@@ -3,13 +3,16 @@ package tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import grammars.BooleanGrammar;
+import grammars.Grammar;
 import grammars.MathGrammar;
+import grammars.RayGrammar;
 import org.junit.jupiter.api.Test;
 
 public class GrammarTests {
 
-    MathGrammar mathGrammar = new MathGrammar();
-    BooleanGrammar boolGrammar = new BooleanGrammar(mathGrammar.exposeEntrypoint());
+    Grammar mathGrammar = new MathGrammar();
+    Grammar boolGrammar = new BooleanGrammar(mathGrammar.exposeEntrypoint());
+    Grammar rayGrammar = new RayGrammar();
 
     @Test
     void testMathGrammar() {
@@ -71,5 +74,22 @@ public class GrammarTests {
         assertFalse(boolGrammar.isValid("not 1"));
         assertFalse(boolGrammar.isValid("1 = 10"));
         assertFalse(boolGrammar.isValid("(x and (z == 10)) and () or (T)"));
+    }
+
+    @Test
+    void testRays() {
+        assertTrue(rayGrammar.isValid("[1]"));
+        assertTrue(rayGrammar.isValid("[\"one\"]"));
+        assertTrue(rayGrammar.isValid("[\"\", \"\"]"));
+        assertTrue(rayGrammar.isValid("[1,2,3,4]"));
+        assertTrue(rayGrammar.isValid("[var, x, y, z, 10]"));
+        assertTrue(rayGrammar.isValid("[    var, x  , y   , z    , 10]"));
+        assertTrue(rayGrammar.isValid("[\"1\",\"2\",\"3\",\"4\"]"));
+        assertTrue(rayGrammar.isValid("[\"1\",\"2\",str1, str2]"));
+
+        assertFalse(rayGrammar.isValid("[]"));
+        assertFalse(rayGrammar.isValid("[\"]"));
+        assertFalse(rayGrammar.isValid("[1,2,]"));
+        assertFalse(rayGrammar.isValid("[1,2, \"three\"]"));
     }
 }
