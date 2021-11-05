@@ -1,0 +1,126 @@
+Program1.txt: This program should take in two command line arguments that
+    are integers x, y, and m. It should then calculate and print out the
+    number of multiples of x and y in the range 1 to m.
+
+    Example: Program1.txt 2 5 20 should print out “12”
+
+    ------ JAVA ------
+    x, y, m = arguments
+    Int numMultiples = 0;
+
+    For(int I = 1, I <= m, I++){
+        if(I%x == 0){
+            numMultiples++;
+        }
+        if(I%y == 0){
+            numMultiples++;
+        }
+    }
+    System.out.println(numMultiples)
+
+    ------ JUDO ------
+    let x = argos[0]
+    let y = argos[1]
+    let m = argos[2]
+
+    let numMultiples = 0
+
+    for i in 1..10[1]:
+        if i%x == 0:
+            numMultiples = numMultiples + 1
+        else:
+            hallpass
+
+        if i%y == 0:
+            numMultiples = numMultiples + 1
+        else:
+            hallpass
+    }
+    out(numMultiples)
+
+---------------------------------------------------------------------------
+
+Program2.txt: This program should take in one command line argument that is
+    an integer x and print out “prime” if x is prime and “not prime” if it
+    is not prime.
+
+    Example: Program2.txt 7 should print out “prime”
+    Example: Program2.txt 8 should print out “not prime”
+
+    ------ JAVA ------
+    x = argument
+    int i = 2;
+    bool flag = false;
+    while(i < x){
+        if(x%i == 0){
+            System.out.println("not prime");
+            flag = true;
+            i = num;
+        }
+        i++;
+    }
+    if(!flag) {
+        System.out.println("prime")
+    }
+
+    ------ JUDO ------
+    x = argos[0]
+    i = 2
+    flag = false
+    loop i < x:
+        if x%i == 0:
+            out("not prime")
+            flag = true
+            i = x
+        else:
+            i = i + 1
+    if not flag:
+        out("prime")
+
+---------------------------------------------------------------------------
+
+Program3.txt, Program4.txt, and Program5.txt: Each of these programs should
+    produce a parsing error. They are to show that your translator does not
+    accept programs that are not syntactically correct (according to your
+    grammar). Each one should illustrate a different parsing error.
+
+    Errors:
+        Bad indentation: multiple types of
+        Failed conditionals
+
+Program3.txt - isPalindrome in Judo
+    let x = argos[0]            ? Passing in a string
+    let left = 0                ? Left index
+    let right = x.length-1      ? Right index
+    let flag = true
+
+    loop flag and left <= right:
+        if x[left] != x[right]:
+            flag = false
+        else:
+            left = left + 1
+            right = right - 1
+
+    if flag:
+        out("Is a palidrome!")
+    else:
+        out("Is not a palindrome")
+
+
+--------------------------------------
+
+Program4.txt - Star Diamond in Judo
+
+    let lastLevel = argos[0]        ? Number of stars to print in last level
+
+    for i in 1..lastLevel:
+
+
+
+--------------------------------------
+
+Program5.txt - Counting Occurrences in a String in Judo
+
+
+
+
