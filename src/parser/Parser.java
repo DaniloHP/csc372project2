@@ -4,8 +4,6 @@ import grammars.BooleanGrammar;
 import grammars.Grammar;
 import grammars.MathGrammar;
 import grammars.RayGrammar;
-import parser.Errors.WhitespaceError;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -16,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import parser.Errors.IndentationError;
+import parser.Errors.WhitespaceError;
 
 public class Parser {
 
@@ -56,6 +56,10 @@ public class Parser {
                      * if we allow array declarations to be on multiple lines.
                      */
                     this.whitespace = wsm.group(1); //leading whitespace
+                    char c = this.whitespace.charAt(0);
+                    if (!stringIsHomogenous(this.whitespace)) {
+                        throw new WhitespaceError();
+                    }
                 }
                 lines.add(new Line(sb, lineNum));
             }
@@ -68,10 +72,21 @@ public class Parser {
         }
     }
 
+    private boolean stringIsHomogenous(String s) {
+        return stringIsHomogenous(s, s.charAt(0));
+    }
+
+    private boolean stringIsHomogenous(String s, char toMatch) {
+        for (char c : s.toCharArray()) {
+            if (c != toMatch) return false;
+        }
+        return true;
+    }
+
     /**
      * Testing constructor
      */
-    public Parser(String whitespace, String...lines) {
+    public Parser(String whitespace, String... lines) {
         this.whitespace = whitespace;
         this.lines = new ArrayList<>();
         int i = 1;
@@ -81,16 +96,14 @@ public class Parser {
     }
 
     public int countIndents(String ws) {
-        int indents = 0;
-        for (int i = 0, j = 0; i < ws.length(); i++, j++) {
-            if (j == whitespace.length()) {
-                j = 0;
-            }
-            if (ws.charAt(i) != whitespace.charAt(j)) {
-                throw new WhitespaceError();
-            }
+        if (
+            !stringIsHomogenous(ws) || //is all the same character
+            ws.charAt(0) != whitespace.charAt(0) || //that character is the same as we expect
+            ws.length() % whitespace.length() != 0
+        ) {
+            throw new IndentationError();
         }
-        return indents;
+        return ws.length() / whitespace.length();
     }
 
     public boolean parse() {
@@ -98,12 +111,12 @@ public class Parser {
         int currWSLevel = 0;
         for (int i = 0; i < lines.size(); i++) {
             StringBuilder line = lines.get(i).code;
-
         }
         return false;
     }
 
     private static class Line {
+
         public Line(CharSequence code, int lineNum) {
             this.code = new StringBuilder(code);
             this.lineNum = lineNum;
@@ -114,6 +127,7 @@ public class Parser {
     }
 
     private static class Variable {
+
         String identifier;
         Type type;
     }
