@@ -9,11 +9,11 @@ public class RayGrammar extends Grammar {
         super();
         //<rays>, <int_list>, <string_list>
         Rule intRayRule = new Rule(
-            "\\[( *[\\d|[a-zA-Z_]+[a-zA-Z_\\d]*]* *, *)* *([\\d|[a-zA-Z_]+[a-zA-Z_\\d]*]+) *\\]",
+            "\\[( *[\\d|[\\w&&[^\\d]]+[\\w]*]* *, *)* *([\\d|[\\w&&[^\\d]]+[\\w]*]+) *\\]",
             "INT_LIST"
         );
         Rule strRayRule = new Rule(
-            "\\[ *((( *\\\"\\p{Print}*\\\" *)|( *[a-zA-Z_]+[a-zA-Z_\\d]*) *) *, *)*((\\\"\\p{Print}*\\\")|([a-zA-Z_]+[a-zA-Z_\\d]+)) *\\]",
+            "\\[ *((( *\\\"\\p{Print}*\\\" *)|( *[\\w&&[^\\d]]+[\\w]*) *) *, *)*((\\\"\\p{Print}*\\\")|([a-zA-Z_]+[a-zA-Z_\\d]+)) *\\]",
             "STR_LIST"
         );
 

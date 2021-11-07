@@ -8,7 +8,7 @@ public abstract class Grammar {
     protected final List<List<Rule>> levels;
     //Rules that show up in a lot of grammars. Paren rule could also be here
     protected final Rule baseDownRule = new Rule("(.*)", "DOWN_RULE");
-    protected final Rule varRule = new Rule("[a-zA-Z_]+[a-zA-Z_\\d]*", "VARIABLES");
+    protected final Rule varRule = new Rule("[\\w&&[^\\d]]+[\\w]*", "VARIABLES");
     protected final Rule intRule = new Rule("\\d+", "INTEGERS");
 
     protected Grammar() {

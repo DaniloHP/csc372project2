@@ -28,25 +28,26 @@ public class Parser {
     private String wsEnglishName = "";
     private static final String COMMENT_SYMBOL = "?";
     private static final Pattern WS_YANK = Pattern.compile("([ \\t]+).*");
-    private static final Pattern WS_PREFIX = Pattern.compile("([ \\t]*).*");
+    private static final Pattern WS_SPLIT = Pattern.compile("([ \\t]*)(.*)");
     private static final Pattern EMPTY_LINE = Pattern.compile("\\s*(\\?.*)?");
-    private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(.*?) *: *");
-    private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(.*?) *: *");
+
+    private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(?<condition>.*?) *: *");
+    private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
     private static final Pattern ELSE_STMT = Pattern.compile("[ \\t]*else *: *");
     private static final Pattern ASSIGN_STMT = Pattern.compile(
-        "[ \\t]*let +[a-zA-Z_]+[a-zA-Z_\\d]* += +(.*)"
+        "[ \\t]*let +(?<lValue>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
     );
     private static final Pattern REASSIGN_STMT = Pattern.compile(
-        "[ \\t]*[a-zA-Z_]+[a-zA-Z_\\d]* += +(.*)"
+        "[ \\t]*(?<lValue>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
     );
     private static final Pattern FORRANGE_STMT = Pattern.compile(
-        "[ \\t]*for +([a-zA-Z_]+[a-zA-Z_\\d]*) +in +(.*?)\\.\\.(.*?)(\\[.*])? *: *"
+        "[ \\\\t]*for +(?<loopVar>[a-zA-Z_]+[a-zA-Z_\\\\d]*) +in +(?<lo>.*?)\\.\\.(?<hi>.*?)(\\[(?<step>.+)])? *: *"
     );
     private static final Pattern FOREACH_STMT = Pattern.compile(
-        "[ \\t]*for +([a-zA-Z_]+[a-zA-Z_\\d]*) +in +([a-zA-Z_]+[a-zA-Z_\\d]*) +: *"
+        "[ \\t]*for +(?<loopVar>[\\w&&[^\\d]]+[\\w]*) +in +(?<array>[\\w&&[^\\d]]+[\\w]*) *: *"
     );
-    private static final Pattern LOOP_STMT = Pattern.compile("[ \\t]*loop +(.*?) +: *");
-    private static final Pattern PRINT_STMT = Pattern.compile("out\\((.*)\\)");
+    private static final Pattern LOOP_STMT = Pattern.compile("[ \\t]*loop +(?<condition>.*?) *: *");
+    private static final Pattern PRINT_STMT = Pattern.compile("out\\((?<argument>.*)\\)");
 
     private static final Set<String> KEYWORDS = new HashSet<>(
         List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
@@ -64,7 +65,7 @@ public class Parser {
             int lineNum = 0;
             while (br.ready()) {
                 lineNum++;
-                String line = br.readLine();
+                String line = br.readLine().stripTrailing();
                 if (EMPTY_LINE.matcher(line).matches()) {
                     //lines of all whitespace or only comments are skipped
                     continue;
@@ -90,6 +91,11 @@ public class Parser {
                     String plural = numChars == 1 ? "" : "s";
                     this.wsEnglishName = String.format("%d %s%s", numChars, charInUse, plural);
                     //result will be something like "1 tab", "4 spaces", etc.
+                }
+                int index = sb.indexOf(COMMENT_SYMBOL);
+                if (index > 0) {
+                    sb.setLength(index); //cut off comments
+                    sb.trimToSize();
                 }
                 lines.add(new Line(sb, lineNum));
             }
@@ -165,26 +171,27 @@ public class Parser {
             int currDepth = scopes.size() - 1; //-1 because scope includes the global scope of argos
             Line lineObj = lines.get(i);
             checkIndentation(lineObj, currDepth);
+            Line trimmed = lineObj.trimmedCopy();
             StringBuilder line = lineObj.code;
             int ln = lineObj.lineNum;
             if (ASSIGN_STMT.matcher(line).matches()) {
-                handleAssignment(lineObj, java, scopes);
+                handleAssignment(trimmed, java, scopes);
             } else if (REASSIGN_STMT.matcher(line).matches()) {
-                handleReassignment(lineObj, java, scopes);
+                handleReassignment(trimmed, java, scopes);
             } else if (IF_STMT.matcher(line).matches()) {
-                handleIf(lineObj, java, scopes);
+                handleIf(trimmed, java, scopes);
             } else if (ELF_STMT.matcher(line).matches()) {
-                handleElf(lineObj, java, scopes);
+                handleElf(trimmed, java, scopes);
             } else if (ELSE_STMT.matcher(line).matches()) {
-                handleElse(lineObj, java, scopes);
+                handleElse(trimmed, java, scopes);
             } else if (FORRANGE_STMT.matcher(line).matches()) {
-                handleForRange(lineObj, java, scopes);
+                handleForRange(trimmed, java, scopes);
             } else if (FOREACH_STMT.matcher(line).matches()) {
-                handleForEach(lineObj, java, scopes);
+                handleForEach(trimmed, java, scopes);
             } else if (LOOP_STMT.matcher(line).matches()) {
-                handleLoop(lineObj, java, scopes);
+                handleLoop(trimmed, java, scopes);
             } else if (PRINT_STMT.matcher(line).matches()) {
-                handlePrint(lineObj, java, scopes);
+                handlePrint(trimmed, java, scopes);
             } else {
                 throw new InvalidStatementError("Invalid statement", ln);
             }
@@ -193,18 +200,28 @@ public class Parser {
     }
 
     public void checkIndentation(Line line, int level) {
-        Matcher m = WS_PREFIX.matcher(line.code);
+        Matcher m = WS_SPLIT.matcher(line.code);
         assert m.matches();
         if (countIndents(m.group(1), line.lineNum) != level) {
             throw new IndentationError("Unexpected change in indentation level", line.lineNum);
         }
     }
 
+    public Matcher armMatcher(Pattern toUse, CharSequence toMatch) {
+        Matcher m = toUse.matcher(toMatch);
+        m.matches();
+        //this has to be done to set internal state of the matcher to be ready
+        //to do things like query the groups. Thanks OOP.
+        return m;
+    }
+
     public void handleAssignment(
         Line line,
         StringBuilder java,
         Stack<Map<String, Variable>> scopes
-    ) {}
+    ) {
+        Matcher m = armMatcher(ASSIGN_STMT, line.code);
+    }
 
     public void handleReassignment(
         Line line,
@@ -232,13 +249,23 @@ public class Parser {
 
     private static class Line {
 
+        final StringBuilder code;
+        final int lineNum;
+
         public Line(CharSequence code, int lineNum) {
             this.code = new StringBuilder(code);
             this.lineNum = lineNum;
         }
 
-        StringBuilder code;
-        int lineNum;
+        public Line(Line other) {
+            this.code = new StringBuilder(other.code);
+            this.lineNum = other.lineNum;
+        }
+
+        public Line trimmedCopy() {
+            StringBuilder sb = new StringBuilder(code.toString().strip());
+            return new Line(sb, lineNum);
+        }
     }
 
     private static class Variable {
