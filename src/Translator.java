@@ -6,6 +6,7 @@ public class Translator {
         if (args.length != 1) {
             System.err.println("Expected the filename of a Judo file.");
         }
-        Parser parser = new Parser(args[1]);
+        Parser parser1 = new Parser("", "");
+        parser1.parse();
     }
 }

@@ -3,7 +3,7 @@ package tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import parser.Errors.IndentationError;
+import parser.errors.IndentationError;
 import parser.Parser;
 
 public class ParserTests {

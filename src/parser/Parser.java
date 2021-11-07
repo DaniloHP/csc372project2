@@ -10,25 +10,50 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import parser.Errors.IndentationError;
-import parser.Errors.WhitespaceError;
+import parser.errors.IndentationError;
+import parser.errors.InvalidStatementError;
 
 public class Parser {
 
     private final List<Line> lines;
     private Grammar mathGrammar, booleanGrammar, rayGrammar;
     private String whitespace = "";
+    private String wsEnglishName = "";
     private static final String COMMENT_SYMBOL = "?";
-    private Pattern wsYank;
-    private Pattern wsEat;
+    private static final Pattern WS_YANK = Pattern.compile("([ \\t]+).*");
+    private static final Pattern WS_PREFIX = Pattern.compile("([ \\t]*).*");
+    private static final Pattern EMPTY_LINE = Pattern.compile("\\s*(\\?.*)?");
+    private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(.*?) *: *");
+    private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(.*?) *: *");
+    private static final Pattern ELSE_STMT = Pattern.compile("[ \\t]*else *: *");
+    private static final Pattern ASSIGN_STMT = Pattern.compile(
+        "[ \\t]*let +[a-zA-Z_]+[a-zA-Z_\\d]* += +(.*)"
+    );
+    private static final Pattern REASSIGN_STMT = Pattern.compile(
+        "[ \\t]*[a-zA-Z_]+[a-zA-Z_\\d]* += +(.*)"
+    );
+    private static final Pattern FORRANGE_STMT = Pattern.compile(
+        "[ \\t]*for +([a-zA-Z_]+[a-zA-Z_\\d]*) +in +(.*?)\\.\\.(.*?)(\\[.*])? *: *"
+    );
+    private static final Pattern FOREACH_STMT = Pattern.compile(
+        "[ \\t]*for +([a-zA-Z_]+[a-zA-Z_\\d]*) +in +([a-zA-Z_]+[a-zA-Z_\\d]*) +: *"
+    );
+    private static final Pattern LOOP_STMT = Pattern.compile("[ \\t]*loop +(.*?) +: *");
+    private static final Pattern PRINT_STMT = Pattern.compile("out\\((.*)\\)");
+
+    private static final Set<String> KEYWORDS = new HashSet<>(
+        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
+    );
+    private static final Variable ARGOS = new Variable("argos", Type.INT_LIST);
 
     public Parser(String filename) {
-        this.wsYank = Pattern.compile("([ \\t]+).*");
-        this.wsEat = Pattern.compile("\\s+");
         this.mathGrammar = new MathGrammar();
         this.booleanGrammar = new BooleanGrammar(mathGrammar.exposeEntrypoint());
         this.rayGrammar = new RayGrammar();
@@ -40,11 +65,12 @@ public class Parser {
             while (br.ready()) {
                 lineNum++;
                 String line = br.readLine();
-                if (wsEat.matcher(line).matches()) {
-                    continue; //lines of all whitespace are skipped
+                if (EMPTY_LINE.matcher(line).matches()) {
+                    //lines of all whitespace or only comments are skipped
+                    continue;
                 }
                 StringBuilder sb = new StringBuilder(line);
-                Matcher wsm = wsYank.matcher(line);
+                Matcher wsm = WS_YANK.matcher(line);
                 if (
                     wsm.matches() &&
                     !wsm.group(2).startsWith(COMMENT_SYMBOL) &&
@@ -56,10 +82,14 @@ public class Parser {
                      * if we allow array declarations to be on multiple lines.
                      */
                     this.whitespace = wsm.group(1); //leading whitespace
-                    char c = this.whitespace.charAt(0);
-                    if (!stringIsHomogenous(this.whitespace)) {
-                        throw new WhitespaceError();
+                    if (stringIsHeterogeneous(this.whitespace)) {
+                        throw new IndentationError("Invalid mixing of tabs and spaces", lineNum);
                     }
+                    int numChars = this.whitespace.length();
+                    String charInUse = this.whitespace.charAt(0) == ' ' ? "space" : "tab";
+                    String plural = numChars == 1 ? "" : "s";
+                    this.wsEnglishName = String.format("%d %s%s", numChars, charInUse, plural);
+                    //result will be something like "1 tab", "4 spaces", etc.
                 }
                 lines.add(new Line(sb, lineNum));
             }
@@ -70,17 +100,6 @@ public class Parser {
             e.printStackTrace();
             System.exit(1);
         }
-    }
-
-    private boolean stringIsHomogenous(String s) {
-        return stringIsHomogenous(s, s.charAt(0));
-    }
-
-    private boolean stringIsHomogenous(String s, char toMatch) {
-        for (char c : s.toCharArray()) {
-            if (c != toMatch) return false;
-        }
-        return true;
     }
 
     /**
@@ -95,25 +114,121 @@ public class Parser {
         }
     }
 
+    private boolean stringIsHeterogeneous(String s) {
+        return !stringIsHomogenous(s, s.charAt(0));
+    }
+
+    private boolean stringIsHomogenous(String s, char toMatch) {
+        for (char c : s.toCharArray()) {
+            if (c != toMatch) return false;
+        }
+        return true;
+    }
+
+    //this method basically only exists for unit testing purposes
     public int countIndents(String ws) {
-        if (
-            !stringIsHomogenous(ws) || //is all the same character
-            ws.charAt(0) != whitespace.charAt(0) || //that character is the same as we expect
-            ws.length() % whitespace.length() != 0
-        ) {
-            throw new IndentationError();
+        return countIndents(ws, -1);
+    }
+
+    public int countIndents(String ws, int ln) {
+        //is all the same character
+        //that character is the same as we expect
+        if (stringIsHeterogeneous(ws)) {
+            throw new IndentationError("Invalid mixing of tabs and spaces", ln);
+        } else if (ws.charAt(0) != whitespace.charAt(0)) {
+            throw new IndentationError(
+                "Unexpected whitespace character, file is using " + this.wsEnglishName,
+                ln
+            );
+        } else if (ws.length() % whitespace.length() != 0) {
+            throw new IndentationError("Whitespace is not aligned to " + this.wsEnglishName, ln);
         }
         return ws.length() / whitespace.length();
     }
 
     public boolean parse() {
-        Map<String, Variable> vars = new HashMap<>();
-        int currWSLevel = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            StringBuilder line = lines.get(i).code;
-        }
-        return false;
+        Stack<Map<String, Variable>> scopes = new Stack<>();
+        Map<String, Variable> defaultScope = new HashMap<>(1);
+        defaultScope.put("argos", ARGOS);
+        scopes.push(defaultScope);
+        StringBuilder java = new StringBuilder();
+        java.append("public class JudoTranslated {\npublic static void main(String[] args) {");
+        return parseHelper(0, scopes, java);
     }
+
+    public boolean parseHelper(
+        int lineStart,
+        Stack<Map<String, Variable>> scopes,
+        StringBuilder java
+    ) {
+        for (int i = lineStart; i < lines.size(); i++) {
+            int currDepth = scopes.size() - 1; //-1 because scope includes the global scope of argos
+            Line lineObj = lines.get(i);
+            checkIndentation(lineObj, currDepth);
+            StringBuilder line = lineObj.code;
+            int ln = lineObj.lineNum;
+            if (ASSIGN_STMT.matcher(line).matches()) {
+                handleAssignment(lineObj, java, scopes);
+            } else if (REASSIGN_STMT.matcher(line).matches()) {
+                handleReassignment(lineObj, java, scopes);
+            } else if (IF_STMT.matcher(line).matches()) {
+                handleIf(lineObj, java, scopes);
+            } else if (ELF_STMT.matcher(line).matches()) {
+                handleElf(lineObj, java, scopes);
+            } else if (ELSE_STMT.matcher(line).matches()) {
+                handleElse(lineObj, java, scopes);
+            } else if (FORRANGE_STMT.matcher(line).matches()) {
+                handleForRange(lineObj, java, scopes);
+            } else if (FOREACH_STMT.matcher(line).matches()) {
+                handleForEach(lineObj, java, scopes);
+            } else if (LOOP_STMT.matcher(line).matches()) {
+                handleLoop(lineObj, java, scopes);
+            } else if (PRINT_STMT.matcher(line).matches()) {
+                handlePrint(lineObj, java, scopes);
+            } else {
+                throw new InvalidStatementError("Invalid statement", ln);
+            }
+        }
+        return true;
+    }
+
+    public void checkIndentation(Line line, int level) {
+        Matcher m = WS_PREFIX.matcher(line.code);
+        assert m.matches();
+        if (countIndents(m.group(1), line.lineNum) != level) {
+            throw new IndentationError("Unexpected change in indentation level", line.lineNum);
+        }
+    }
+
+    public void handleAssignment(
+        Line line,
+        StringBuilder java,
+        Stack<Map<String, Variable>> scopes
+    ) {}
+
+    public void handleReassignment(
+        Line line,
+        StringBuilder java,
+        Stack<Map<String, Variable>> scopes
+    ) {}
+
+    public void handleIf(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
+
+    public void handleElf(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
+
+    public void handleElse(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
+
+    public void handleForRange(
+        Line line,
+        StringBuilder java,
+        Stack<Map<String, Variable>> scopes
+    ) {}
+
+    public void handleForEach(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
+
+    public void handleLoop(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
+
+    public void handlePrint(Line line, StringBuilder java, Stack<Map<String, Variable>> scopes) {}
 
     private static class Line {
 
@@ -127,6 +242,11 @@ public class Parser {
     }
 
     private static class Variable {
+
+        public Variable(String identifier, Type type) {
+            this.identifier = identifier;
+            this.type = type;
+        }
 
         String identifier;
         Type type;
