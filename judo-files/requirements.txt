@@ -102,25 +102,84 @@ Program3.txt - isPalindrome in Judo
             right = right - 1
 
     if flag:
-        out("Is a palidrome!")
+        out("Is a palindrome!")
     else:
         out("Is not a palindrome")
 
 
 --------------------------------------
 
-Program4.txt - Star Diamond in Judo
+Program4.txt - Asterisk Diamond in Judo
+    ? Must give the number of asterisks wide to print
 
-    let lastLevel = argos[0]        ? Number of stars to print in last level
+    let maxstars = argos[0]                ? Number of stars to print in middle row
 
-    for i in 1..lastLevel:
+    if maxstars%2 == 0:                    ? Make number of stars odd
+        maxstars = maxstars + 1
+    else
+        hallpass
 
+    let spaces = (maxstars - 1)/2          ? Spaces on each side
+    let middleRow = (maxstars/2) + 0.5     ? Middle row == ceil(maxstars/2)
+    let stars = 1                          ? Current number of stars
+
+    for i in 1..middleRow:                 ? Printing top half of the diamond, including middle row
+        for x in 1..spaces:                ? Spaces on left side
+            out(" ")
+
+        for x in 1..stars:                 ? Stars
+            out("*")
+        stars = stars + 2
+
+        for x in 1..spaces:                ? Spaces on right side
+            out(" ")
+        spaces = spaces - 1
+        out("\n")
+
+    let bottomRow = middleRow - 1
+    spaces = 1
+    stars = maxstars - 2
+
+    for i in 1..bottomRow:                 ? Printing bottom half of the diamond
+        for x in 1..spaces:                ? Spaces on left side
+            out(" ")
+
+        for x in 1..stars:                 ? Stars
+            out("*")
+        stars = stars - 2
+
+        for x in 1..spaces:                ? Spaces on right side
+            out(" ")
+        spaces = spaces + 1
+        out(\n)
 
 
 --------------------------------------
 
 Program5.txt - Counting Occurrences in a String in Judo
+    ? Program takes in a string, its length, and the character to look for
+    let searchString = argos[0]     ? String to search through
+    let last = argos[1] - 1         ? Last index of string == length - 1
+    let searchChar = argos[2]       ? Character to search for
 
+    let count = 0                   ? Number of occurrences
+
+    for i in 1..last:
+        if searchString[i] == searchChar:
+            out("Index: ")
+            out(i)
+            out("\n")
+            count = count + 1
+        else:
+            hallpass
+
+    if count > 0:
+        out("The character was found ")
+        out(count)
+        out(" times")
+        out("\n")
+    else:
+        out("The character was not found in the string\n")
 
 
 
