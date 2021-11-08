@@ -3,7 +3,7 @@ package grammars;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BooleanGrammar extends Grammar {
+public class BoolGrammar extends Grammar {
 
     /**
      * BooleanGrammar depends on MathGrammar for comparisons, so it's entrypoint
@@ -11,7 +11,7 @@ public class BooleanGrammar extends Grammar {
      * @param mathEntryPoint The correct place to start parsing a full math
      *                       expression.
      */
-    public BooleanGrammar(List<Rule> mathEntryPoint) {
+    public BoolGrammar(MathGrammar mg) {
         super();
         //<or_expr>
         Rule orRule = new Rule("(.*) +or +(.*)", "OR");
@@ -73,8 +73,8 @@ public class BooleanGrammar extends Grammar {
         //// Populate the levels, bottom up
         //<comparison>
         populateBinaryRules(
-            mathEntryPoint,
-            mathEntryPoint,
+            mg.exposeEntrypoint(),
+            mg.exposeEntrypoint(),
             notEqualRule,
             notEqualRuleRight,
             equalRule,

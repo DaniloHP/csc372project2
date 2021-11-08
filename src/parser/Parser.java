@@ -1,9 +1,8 @@
 package parser;
 
-import grammars.BooleanGrammar;
-import grammars.Grammar;
-import grammars.MathGrammar;
-import grammars.RayGrammar;
+import static java.text.MessageFormat.format;
+
+import grammars.*;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -19,13 +18,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import parser.errors.IndentationError;
 import parser.errors.InvalidStatementError;
+import parser.errors.VariableError;
 
 public class Parser {
 
-    private final List<Line> lines;
-    private Grammar mathGrammar, booleanGrammar, rayGrammar;
-    private String whitespace = "";
-    private String wsEnglishName = "";
     private static final String COMMENT_SYMBOL = "?";
     private static final Pattern WS_YANK = Pattern.compile("([ \\t]+).*");
     private static final Pattern WS_SPLIT = Pattern.compile("([ \\t]*)(.*)");
@@ -35,10 +31,10 @@ public class Parser {
     private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
     private static final Pattern ELSE_STMT = Pattern.compile("[ \\t]*else *: *");
     private static final Pattern ASSIGN_STMT = Pattern.compile(
-        "[ \\t]*let +(?<lValue>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
+        "[ \\t]*let +(?<var>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
     );
     private static final Pattern REASSIGN_STMT = Pattern.compile(
-        "[ \\t]*(?<lValue>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
+        "[ \\t]*(?<var>[\\w&&[^\\d]]+[\\w]*) += +(?<rValue>.*)"
     );
     private static final Pattern FORRANGE_STMT = Pattern.compile(
         "[ \\\\t]*for +(?<loopVar>[a-zA-Z_]+[a-zA-Z_\\\\d]*) +in +(?<lo>.*?)\\.\\.(?<hi>.*?)(\\[(?<step>.+)])? *: *"
@@ -53,11 +49,21 @@ public class Parser {
         List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
     );
     private static final Variable ARGOS = new Variable("argos", Type.INT_LIST);
+    private static final StringGrammar STRING_GRAMMAR = new StringGrammar();
+    private static final MathGrammar MATH_GRAMMAR = new MathGrammar();
+    private static final BoolGrammar BOOL_GRAMMAR = new BoolGrammar(MATH_GRAMMAR);
+    private static final RayGrammar RAY_GRAMMAR = new RayGrammar(
+        BOOL_GRAMMAR,
+        MATH_GRAMMAR,
+        STRING_GRAMMAR
+    );
+
+    private final List<Line> lines;
+    private String whitespace;
+    private String wsEnglishName;
 
     public Parser(String filename) {
-        this.mathGrammar = new MathGrammar();
-        this.booleanGrammar = new BooleanGrammar(mathGrammar.exposeEntrypoint());
-        this.rayGrammar = new RayGrammar();
+        this.whitespace = this.wsEnglishName = "";
         lines = new ArrayList<>();
         try {
             FileReader fr = new FileReader(filename);
@@ -113,6 +119,7 @@ public class Parser {
      */
     public Parser(String whitespace, String... lines) {
         this.whitespace = whitespace;
+        this.wsEnglishName = "";
         this.lines = new ArrayList<>();
         int i = 1;
         for (String line : lines) {
@@ -221,6 +228,20 @@ public class Parser {
         Stack<Map<String, Variable>> scopes
     ) {
         Matcher m = armMatcher(ASSIGN_STMT, line.code);
+        String varName = m.group("var");
+        String value = m.group("rValue");
+        var curScope = scopes.peek();
+        if (curScope.containsKey(varName)) {
+            throw new VariableError(
+                format("Variable `{0}`is already defined in this scope.", varName),
+                line.lineNum
+            );
+        }
+        if (MATH_GRAMMAR.isValid(value)) {
+            curScope.put(varName, new Variable(varName, Type.INT));
+        } else if (BOOL_GRAMMAR.isValid(value)) {
+            curScope.put(varName, new Variable(varName, Type.BOOL));
+        } else if (RAY_GRAMMAR.isValid(value)) {}
     }
 
     public void handleReassignment(

@@ -5,21 +5,25 @@ import java.util.List;
 
 public class RayGrammar extends Grammar {
 
-    public RayGrammar() {
+    public RayGrammar(BoolGrammar bg, MathGrammar mg, StringGrammar sg) {
         super();
         //<rays>, <int_list>, <string_list>
-        Rule intRayRule = new Rule(
-            "\\[( *[\\d|[\\w&&[^\\d]]+[\\w]*]* *, *)* *([\\d|[\\w&&[^\\d]]+[\\w]*]+) *\\]",
-            "INT_LIST"
-        );
-        Rule strRayRule = new Rule(
-            "\\[ *((( *\\\"\\p{Print}*\\\" *)|( *[\\w&&[^\\d]]+[\\w]*) *) *, *)*((\\\"\\p{Print}*\\\")|([a-zA-Z_]+[a-zA-Z_\\d]+)) *\\]",
-            "STR_LIST"
-        );
+        Rule rayRule = new Rule("\\[ *(.+?) *\\]", "RAY_RULE");
+        List<Rule> rayExpr = new ArrayList<>(List.of(rayRule));
 
-        //Grammar Levels for statements
-        List<Rule> rayExpr = new ArrayList<>(List.of(intRayRule, strRayRule));
+        Rule intRayRule = new Rule(" *(?<curr>.*?) *, *(?<rest>.*)", "INT_LIST");
+        List<Rule> intRayExpr = new ArrayList<>(List.of(intRayRule));
 
-        levels.addAll(List.of(rayExpr));
+        Rule boolRayRule = new Rule(" *(?<curr>.*?) *, *(?<rest>.*)", "BOOL_LIST");
+        List<Rule> boolRayExpr = new ArrayList<>(List.of(boolRayRule));
+
+        Rule strRayRule = new Rule(" *(?<curr>.*?) *, *(?<rest>.*)", "STRING_LIST");
+        List<Rule> strRayExpr = new ArrayList<>(List.of(strRayRule));
+
+        rayRule.addChildren(1, List.of(intRayRule, boolRayRule, strRayRule));
+        populateBinaryRules(mg.exposeEntrypoint(), intRayExpr, intRayRule);
+        populateBinaryRules(bg.exposeEntrypoint(), boolRayExpr, boolRayRule);
+        populateBinaryRules(sg.exposeEntrypoint(), strRayExpr, strRayRule);
+        this.levels.addAll(List.of(rayExpr, boolRayExpr, intRayExpr, strRayExpr));
     }
 }

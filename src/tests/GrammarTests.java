@@ -2,17 +2,18 @@ package tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import grammars.BooleanGrammar;
-import grammars.Grammar;
+import grammars.BoolGrammar;
 import grammars.MathGrammar;
 import grammars.RayGrammar;
+import grammars.StringGrammar;
 import org.junit.jupiter.api.Test;
 
 public class GrammarTests {
 
-    Grammar mathGrammar = new MathGrammar();
-    Grammar boolGrammar = new BooleanGrammar(mathGrammar.exposeEntrypoint());
-    Grammar rayGrammar = new RayGrammar();
+    MathGrammar mathGrammar = new MathGrammar();
+    StringGrammar strGrammar = new StringGrammar();
+    BoolGrammar boolGrammar = new BoolGrammar(mathGrammar);
+    RayGrammar rayGrammar = new RayGrammar(boolGrammar, mathGrammar, strGrammar);
 
     @Test
     void testMathGrammar() {
@@ -91,5 +92,21 @@ public class GrammarTests {
         assertFalse(rayGrammar.isValid("[\"]"));
         assertFalse(rayGrammar.isValid("[1,2,]"));
         assertFalse(rayGrammar.isValid("[1,2, \"three\"]"));
+    }
+
+    @Test
+    void testStrings() {
+        assertTrue(strGrammar.isValid("\"\""));
+        assertTrue(strGrammar.isValid("\"string literal with some stuff\""));
+        assertTrue(strGrammar.isValid("someStringVar"));
+        assertTrue(
+            strGrammar.isValid(
+                "\"abcdeghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%^&*()-=[]{}\\|';:<>,.?/\""
+            )
+        );
+
+        assertFalse(strGrammar.isValid(""));
+        assertFalse(strGrammar.isValid("\"a string with a\nline break\""));
+        assertFalse(strGrammar.isValid("\"a string with poorly\"closed quotes\""));
     }
 }
