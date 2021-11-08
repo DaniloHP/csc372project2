@@ -8,7 +8,7 @@ public class RayGrammar extends Grammar {
     public RayGrammar(BoolGrammar bg, MathGrammar mg, StringGrammar sg) {
         super();
         //<rays>, <int_list>, <string_list>
-        Rule rayRule = new Rule("\\[ *(.+?) *\\]", "RAY_RULE");
+        Rule rayRule = new Rule("\\[ *(?<ray>.+?) *\\]", "RAY_RULE");
         List<Rule> rayExpr = new ArrayList<>(List.of(rayRule));
 
         Rule intRayRule = new Rule(" *(?<curr>.*?) *, *(?<rest>.*)", "INT_LIST");
@@ -20,7 +20,7 @@ public class RayGrammar extends Grammar {
         Rule strRayRule = new Rule(" *(?<curr>.*?) *, *(?<rest>.*)", "STRING_LIST");
         List<Rule> strRayExpr = new ArrayList<>(List.of(strRayRule));
 
-        rayRule.addChildren(1, List.of(intRayRule, boolRayRule, strRayRule));
+        rayRule.addChildren("ray", List.of(intRayRule, boolRayRule, strRayRule));
         populateBinaryRules(mg.exposeEntrypoint(), intRayExpr, intRayRule);
         populateBinaryRules(bg.exposeEntrypoint(), boolRayExpr, boolRayRule);
         populateBinaryRules(sg.exposeEntrypoint(), strRayExpr, strRayRule);

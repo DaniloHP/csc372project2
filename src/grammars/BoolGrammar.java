@@ -8,27 +8,25 @@ public class BoolGrammar extends Grammar {
     /**
      * BooleanGrammar depends on MathGrammar for comparisons, so it's entrypoint
      * *must* be provided.
-     * @param mathEntryPoint The correct place to start parsing a full math
-     *                       expression.
      */
     public BoolGrammar(MathGrammar mg) {
         super();
         //<or_expr>
-        Rule orRule = new Rule("(.*) +or +(.*)", "OR");
-        Rule orRuleRight = new Rule("(.*?) +or +(.*)", "OR_RIGHT");
+        Rule orRule = new Rule("(?<left>.*) +or +(?<right>.*)", "OR");
+        Rule orRuleRight = new Rule("(?<left>.*) +or +(?<right>.*)", "OR_RIGHT");
         Rule orDownRule = baseDownRule.clone();
         orDownRule.id += "_OR";
         List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
 
         //<and_expr>
-        Rule andRule = new Rule("(.*) +and +(.*)", "AND");
-        Rule andRuleRight = new Rule("(.*?) +and +(.*)", "AND_RIGHT");
+        Rule andRule = new Rule("(?<left>.*) +and +(?<right>.*)", "AND");
+        Rule andRuleRight = new Rule("(?<left>.*?) +and +(?<right>.*)", "AND_RIGHT");
         Rule andDownRule = baseDownRule.clone();
         andDownRule.id += "_AND";
         List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
-        Rule notRule = new Rule("not +(.*)");
+        Rule notRule = new Rule("not +(?<inner>.*)");
         Rule notDownRuleToRoot = baseDownRule.clone();
         notDownRuleToRoot.id += "_TO_ROOT";
         Rule notDownRuleToCmp = baseDownRule.clone();
@@ -37,22 +35,22 @@ public class BoolGrammar extends Grammar {
 
         //<bool>
         Rule bool = new Rule("[TF]", "BOOL");
-        Rule boolParenRule = new Rule("\\((.*)\\)", "PARENTHESES");
+        Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, varRule, boolParenRule));
 
         //<comparison>: !=, ==, <, <=, >, >=
-        Rule notEqualRule = new Rule("(.*) +!= +(.*)", "NOT_EQUAL");
-        Rule notEqualRuleRight = new Rule("(.*?) +!= +(.*)", "NOT_EQUAL_RIGHT");
-        Rule equalRule = new Rule("(.*) +== +(.*)", "EQUAL");
-        Rule equalRuleRight = new Rule("(.*?) +== +(.*)", "EQUAL_RIGHT");
-        Rule ltRule = new Rule("(.*) +< +(.*)", "LT");
-        Rule ltRuleRight = new Rule("(.*?) +< +(.*)", "LT_RIGHT");
-        Rule gtRule = new Rule("(.*) +> +(.*)", "GT");
-        Rule gtRuleRight = new Rule("(.*?) +> +(.*)", "GT_RIGHT");
-        Rule lteRule = new Rule("(.*) +<= +(.*)", "LTE");
-        Rule lteRuleRight = new Rule("(.*?) +<= +(.*)", "LTE_RIGHT");
-        Rule gteRule = new Rule("(.*) +>= +(.*)", "GTE");
-        Rule gteRuleRight = new Rule("(.*?) +>= +(.*)", "GTE_RIGHT");
+        Rule notEqualRule = new Rule("(?<left>.*) +!= +(?<right>.*)", "NOT_EQUAL");
+        Rule notEqualRuleRight = new Rule("(?<left>.*) +!= +(?<right>.*)", "NOT_EQUAL_RIGHT");
+        Rule equalRule = new Rule("(?<left>.*) +== +(?<right>.*)", "EQUAL");
+        Rule equalRuleRight = new Rule("(?<left>.*) +== +(?<right>.*)", "EQUAL_RIGHT");
+        Rule ltRule = new Rule("(?<left>.*) +< +(?<right>.*)", "LT");
+        Rule ltRuleRight = new Rule("(?<left>.*) +< +(?<right>.*)", "LT_RIGHT");
+        Rule gtRule = new Rule("(?<left>.*) +> +(?<right>.*)", "GT");
+        Rule gtRuleRight = new Rule("(?<left>.*) +> +(?<right>.*)", "GT_RIGHT");
+        Rule lteRule = new Rule("(?<left>.*) +<= +(?<right>.*)", "LTE");
+        Rule lteRuleRight = new Rule("(?<left>.*) +<= +(?<right>.*)", "LTE_RIGHT");
+        Rule gteRule = new Rule("(?<left>.*) +>= +(?<right>.*)", "GTE");
+        Rule gteRuleRight = new Rule("(?<left>.*) +>= +(?<right>.*)", "GTE_RIGHT");
         List<Rule> comparisonExpr = new ArrayList<>(
             List.of(
                 notEqualRule,
@@ -89,20 +87,20 @@ public class BoolGrammar extends Grammar {
             gteRuleRight
         );
         //<root>
-        boolParenRule.addChildren(1, orExpr);
+        boolParenRule.addChildren("inner", orExpr);
 
         //<not_expr>
-        notRule.addChildren(1, boolRootExpr);
-        notDownRuleToRoot.addChildren(1, boolRootExpr);
-        notDownRuleToCmp.addChildren(1, comparisonExpr);
+        notRule.addChildren("inner", boolRootExpr);
+        notDownRuleToRoot.addChildren("inner", boolRootExpr);
+        notDownRuleToCmp.addChildren("inner", comparisonExpr);
 
         //<and_expr>
         populateBinaryRules(andExpr, notExpr, andRule, andRuleRight);
-        andDownRule.addChildren(1, notExpr);
+        andDownRule.addChildren("inner", notExpr);
 
         //<or_expr>
         populateBinaryRules(orExpr, andExpr, orRule, orRuleRight);
-        orDownRule.addChildren(1, andExpr);
+        orDownRule.addChildren("inner", andExpr);
         levels.addAll(List.of(orExpr, andExpr, notExpr, boolRootExpr, comparisonExpr));
     }
 }

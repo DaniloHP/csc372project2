@@ -7,7 +7,7 @@ public abstract class Grammar {
 
     protected final List<List<Rule>> levels;
     //Rules that show up in a lot of grammars. Paren rule could also be here
-    protected final Rule baseDownRule = new Rule("(.*)", "DOWN_RULE");
+    protected final Rule baseDownRule = new Rule("(?<inner>.*)", "DOWN_RULE");
     protected final Rule varRule = new Rule("[\\w&&[^\\d]]+[\\w]*", "VARIABLES");
     protected final Rule intRule = new Rule("\\d+", "INTEGERS");
 
@@ -30,8 +30,8 @@ public abstract class Grammar {
 
     protected void populateBinaryRules(List<Rule> left, List<Rule> right, Rule... rules) {
         for (var rule : rules) {
-            rule.addChildren(1, left);
-            rule.addChildren(2, right);
+            rule.addChildren("left", left);
+            rule.addChildren("right", right);
         }
     }
 }

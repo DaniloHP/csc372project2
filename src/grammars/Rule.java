@@ -9,16 +9,13 @@ import java.util.regex.Pattern;
 
 public class Rule implements Cloneable {
 
-    private List<List<Rule>> children;
     private Pattern regex;
-    private final int NUM_GROUPS;
-    private Map<String, List<Rule>> groupNames;
+    private Map<String, List<Rule>> children;
     public String id; //for debugging
 
     public Rule(CharSequence regexStr) {
+        children = new HashMap<>();
         regex = Pattern.compile(regexStr.toString());
-        NUM_GROUPS = regex.matcher("").groupCount();
-        children = new ArrayList<>(NUM_GROUPS);
     }
 
     public Rule(CharSequence regexStr, String id) {
@@ -26,23 +23,14 @@ public class Rule implements Cloneable {
         this.id = id;
     }
 
-    public void addChildren(int group, List<Rule> level) {
-        assert group <= NUM_GROUPS;
-        while (children.size() < group) {
-            //grow array if necessary
-            children.add(null);
-        }
-        children.set(group - 1, level);
-    }
-
     //TODO: make named capture groups the only way to validate.
     public void addChildren(String group, List<Rule> level) {
-        if (groupNames == null) groupNames = new HashMap<>();
-        groupNames.put(group, level);
+        if (children == null) children = new HashMap<>();
+        children.put(group, level);
     }
 
     private boolean allTrue(boolean[] arr) {
-        for (var b : arr) {
+        for (boolean b : arr) {
             if (!b) {
                 return false;
             }
@@ -57,16 +45,17 @@ public class Rule implements Cloneable {
                 //it's a matching terminal
                 return true;
             }
-            var resultVector = new boolean[NUM_GROUPS];
-            for (int groupNum = 1; groupNum <= NUM_GROUPS; groupNum++) {
-                int i = groupNum - 1;
-                String currGroup = matcher.group(groupNum).strip();
-                for (Rule rule : children.get(i)) {
+            var resultVector = new boolean[children.size()];
+            int i = 0;
+            for (String k : children.keySet()) {
+                String currGroup = matcher.group(k).strip();
+                for (Rule rule : children.get(k)) {
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
                     }
                     //cannot return false if the above isn't true.
                 }
+                i++;
             }
             return allTrue(resultVector);
         } else {
@@ -82,7 +71,7 @@ public class Rule implements Cloneable {
         try {
             Rule clone = (Rule) super.clone();
             clone.regex = this.regex;
-            clone.children = new ArrayList<>(this.NUM_GROUPS);
+            clone.children = new HashMap<>();
             clone.id = this.id;
             return clone;
         } catch (CloneNotSupportedException e) {
