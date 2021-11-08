@@ -1,6 +1,5 @@
 package grammars;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,8 +8,8 @@ import java.util.regex.Pattern;
 
 public class Rule implements Cloneable {
 
-    private Pattern regex;
-    private Map<String, List<Rule>> children;
+    protected Pattern regex;
+    protected Map<String, List<Rule>> children;
     public String id; //for debugging
 
     public Rule(CharSequence regexStr) {
@@ -23,13 +22,12 @@ public class Rule implements Cloneable {
         this.id = id;
     }
 
-    //TODO: make named capture groups the only way to validate.
     public void addChildren(String group, List<Rule> level) {
         if (children == null) children = new HashMap<>();
         children.put(group, level);
     }
 
-    private boolean allTrue(boolean[] arr) {
+    protected boolean allTrue(boolean[] arr) {
         for (boolean b : arr) {
             if (!b) {
                 return false;
