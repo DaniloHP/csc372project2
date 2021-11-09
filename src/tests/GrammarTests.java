@@ -2,10 +2,7 @@ package tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import grammars.BoolGrammar;
-import grammars.MathGrammar;
-import grammars.RayGrammar;
-import grammars.StringGrammar;
+import grammars.*;
 import org.junit.jupiter.api.Test;
 
 public class GrammarTests {
@@ -22,7 +19,6 @@ public class GrammarTests {
         assertTrue(mathGrammar.isValid("(1)"));
         assertTrue(mathGrammar.isValid("-(1)"));
         assertTrue(mathGrammar.isValid("(x)"));
-        assertTrue(mathGrammar.isValid("___var_11_xy_9"));
         assertTrue(mathGrammar.isValid("100"));
         assertTrue(mathGrammar.isValid("1+1"));
         assertTrue(mathGrammar.isValid("1+-1"));
@@ -39,7 +35,6 @@ public class GrammarTests {
         assertFalse(mathGrammar.isValid("+"));
         assertFalse(mathGrammar.isValid("1++1"));
         assertFalse(mathGrammar.isValid("(1/5"));
-        assertFalse(mathGrammar.isValid("0__bad_var_11_xx_1"));
         assertFalse(mathGrammar.isValid("100.1 * 1, 90 */ 10"));
         assertFalse(mathGrammar.isValid("100 mod (2 * (4/10)"));
     }
@@ -87,9 +82,16 @@ public class GrammarTests {
         assertTrue(rayGrammar.isValid("[    var, x  , y   , z    , 10]"));
         assertTrue(rayGrammar.isValid("[\"1\",\"2\",\"3\",\"4\"]"));
         assertTrue(rayGrammar.isValid("[\"1\",\"2\",str1, str2]"));
+        assertTrue(
+            rayGrammar.isValid("[(x and (z == 10)) and (y != 100 or l or 5 < x) or (T), T, F]")
+        );
+        assertTrue(rayGrammar.isValid("[(8 - 1 + 3) * 6 - ((3 +y) * 2), 1, 2, x]"));
 
         assertFalse(rayGrammar.isValid("[]"));
         assertFalse(rayGrammar.isValid("[\"]"));
+        assertFalse(
+            rayGrammar.isValid("[(x and (z == 10)) and (y != 100 or l or 5 < x) or (T), 1, 2]")
+        );
         assertFalse(rayGrammar.isValid("[1,2,]"));
         assertFalse(rayGrammar.isValid("[1,2, \"three\"]"));
     }
@@ -108,5 +110,29 @@ public class GrammarTests {
         assertFalse(strGrammar.isValid(""));
         assertFalse(strGrammar.isValid("\"a string with a\nline break\""));
         assertFalse(strGrammar.isValid("\"a string with poorly\"closed quotes\""));
+    }
+
+    @Test
+    void testVars() {
+        assertTrue(mathGrammar.isValid("___var_11_xy_9"));
+        assertTrue(boolGrammar.isValid("___var_11_xy_9"));
+        assertTrue(mathGrammar.isValid("i"));
+        assertTrue(boolGrammar.isValid("i"));
+        for (String keyword : Grammar.RESERVED_KEYWORDS) {
+            assertTrue(mathGrammar.isValid("_" + keyword));
+            assertTrue(boolGrammar.isValid("_" + keyword));
+            assertTrue(mathGrammar.isValid(keyword + "_"));
+            assertTrue(boolGrammar.isValid(keyword + "_"));
+        }
+
+        assertFalse(mathGrammar.isValid("_12345678901234567890123456789012"));
+        assertFalse(boolGrammar.isValid("_12345678901234567890123456789012"));
+        //^ Variable longer than 32 chars
+        assertFalse(mathGrammar.isValid("0__bad_var_11_xx_1"));
+        assertFalse(boolGrammar.isValid("0__bad_var_11_xx_1"));
+        for (String keyword : Grammar.RESERVED_KEYWORDS) {
+            assertFalse(mathGrammar.isValid(keyword));
+            assertFalse(boolGrammar.isValid("T == 1 + " + keyword));
+        }
     }
 }

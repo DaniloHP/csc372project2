@@ -2,17 +2,18 @@ package parser;
 
 import static java.text.MessageFormat.format;
 
-import grammars.*;
+import grammars.BoolGrammar;
+import grammars.MathGrammar;
+import grammars.RayGrammar;
+import grammars.StringGrammar;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,9 +46,6 @@ public class Parser {
     private static final Pattern LOOP_STMT = Pattern.compile("[ \\t]*loop +(?<condition>.*?) *: *");
     private static final Pattern PRINT_STMT = Pattern.compile("out\\((?<argument>.*)\\)");
 
-    private static final Set<String> KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
-    );
     private static final Variable ARGOS = new Variable("argos", Type.INT_LIST);
     private static final StringGrammar STRING_GRAMMAR = new StringGrammar();
     private static final MathGrammar MATH_GRAMMAR = new MathGrammar();
@@ -128,14 +126,11 @@ public class Parser {
     }
 
     private boolean stringIsHeterogeneous(String s) {
-        return !stringIsHomogenous(s, s.charAt(0));
-    }
-
-    private boolean stringIsHomogenous(String s, char toMatch) {
+        char toMatch = s.charAt(0);
         for (char c : s.toCharArray()) {
-            if (c != toMatch) return false;
+            if (c != toMatch) return true;
         }
-        return true;
+        return false;
     }
 
     //this method basically only exists for unit testing purposes
@@ -208,9 +203,12 @@ public class Parser {
 
     public void checkIndentation(Line line, int level) {
         Matcher m = WS_SPLIT.matcher(line.code);
-        assert m.matches();
-        if (countIndents(m.group(1), line.lineNum) != level) {
+        boolean matches = m.matches();
+        if (matches && countIndents(m.group(1), line.lineNum) != level) {
             throw new IndentationError("Unexpected change in indentation level", line.lineNum);
+        } else if (!matches) {
+            //should literally never happen because "" will match WS_SPLIT
+            throw new IllegalStateException();
         }
     }
 

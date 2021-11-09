@@ -1,6 +1,7 @@
 package grammars;
 
-import java.util.AbstractMap;
+import static java.util.AbstractMap.SimpleEntry;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,17 +32,17 @@ public class RayRule extends Rule {
         Matcher matcher = regex.matcher(toCheck);
         if (!toCheck.isEmpty() && matcher.matches()) {
             boolean[] resultVector;
-            List<AbstractMap.SimpleEntry<String, String>> groups = new ArrayList<>();
+            List<SimpleEntry<String, String>> groups = new ArrayList<>();
             String lastGroup = groupOrNull(matcher, "last");
             String currGroup = groupOrNull(matcher, "curr");
             String restGroup = groupOrNull(matcher, "rest");
             if (lastGroup == null && currGroup != null && restGroup != null) {
                 resultVector = new boolean[2];
-                groups.add(new AbstractMap.SimpleEntry<>("curr", currGroup));
-                groups.add(new AbstractMap.SimpleEntry<>("rest", restGroup));
+                groups.add(new SimpleEntry<>("curr", currGroup));
+                groups.add(new SimpleEntry<>("rest", restGroup));
             } else if (lastGroup != null && currGroup == null && restGroup == null) {
                 resultVector = new boolean[1]; //a little ridiculous I know
-                groups.add(new AbstractMap.SimpleEntry<>("last", lastGroup));
+                groups.add(new SimpleEntry<>("last", lastGroup));
             } else {
                 throw new IllegalStateException(
                     "This shouldn't be possible, check the ray grammar!"
