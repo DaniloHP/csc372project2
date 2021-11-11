@@ -14,29 +14,29 @@ public class BoolGrammar extends Grammar {
         //<or_expr>
         Rule orRule = new Rule("(?<left>.*) +or +(?<right>.*)", "OR");
         Rule orRuleRight = new Rule("(?<left>.*) +or +(?<right>.*)", "OR_RIGHT");
-        Rule orDownRule = baseDownRule.clone();
+        Rule orDownRule = BASE_DOWN_RULE.clone();
         orDownRule.id += "_OR";
         List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
 
         //<and_expr>
         Rule andRule = new Rule("(?<left>.*) +and +(?<right>.*)", "AND");
         Rule andRuleRight = new Rule("(?<left>.*?) +and +(?<right>.*)", "AND_RIGHT");
-        Rule andDownRule = baseDownRule.clone();
+        Rule andDownRule = BASE_DOWN_RULE.clone();
         andDownRule.id += "_AND";
         List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
         Rule notRule = new Rule("not +(?<inner>.*)");
-        Rule notDownRuleToRoot = baseDownRule.clone();
+        Rule notDownRuleToRoot = BASE_DOWN_RULE.clone();
         notDownRuleToRoot.id += "_TO_ROOT";
-        Rule notDownRuleToCmp = baseDownRule.clone();
+        Rule notDownRuleToCmp = BASE_DOWN_RULE.clone();
         notDownRuleToRoot.id += "_TO_CMP";
         List<Rule> notExpr = new ArrayList<>(List.of(notRule, notDownRuleToRoot, notDownRuleToCmp));
 
         //<bool>
         Rule bool = new Rule("[TF]", "BOOL");
         Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
-        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, varRule, boolParenRule));
+        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, VAR_RULE, boolParenRule));
 
         //<comparison>: !=, ==, <, <=, >, >=
         Rule notEqualRule = new Rule("(?<left>.*) +!= +(?<right>.*)", "NOT_EQUAL");

@@ -2,7 +2,6 @@ package grammars;
 
 import java.util.ArrayList;
 import java.util.List;
-import parser.Type;
 
 public class RayGrammar extends Grammar {
 
@@ -35,11 +34,6 @@ public class RayGrammar extends Grammar {
         populateRayRules(bg.exposeEntrypoint(), boolRayExpr, boolRayRule);
         populateRayRules(sg.exposeEntrypoint(), strRayExpr, strRayRule);
         this.levels.addAll(List.of(rayExpr, boolRayExpr, intRayExpr, strRayExpr));
-    }
-
-    public Type categorizeRay(CharSequence toCheck) {
-        //TODO
-        return null;
     }
 
     private void populateRayRules(List<Rule> curr, List<Rule> rest, Rule... rules) {

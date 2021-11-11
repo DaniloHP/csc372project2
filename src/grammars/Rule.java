@@ -51,7 +51,6 @@ public class Rule implements Cloneable {
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
                     }
-                    //cannot return false if the above isn't true.
                 }
                 i++;
             }

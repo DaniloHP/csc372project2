@@ -12,7 +12,7 @@ public class MathGrammar extends Grammar {
         Rule addRuleRight = new Rule("(?<left>.*?)\\+(?<right>.*)", "ADDITION_RIGHT");
         Rule subRule = new Rule("(?<left>.*)-(?<right>.*)", "SUBTRACTION");
         Rule subRuleRight = new Rule("(?<left>.*?)-(?<right>.*)", "SUBTRACTION_RIGHT");
-        Rule asDownRule = baseDownRule.clone();
+        Rule asDownRule = BASE_DOWN_RULE.clone();
         asDownRule.id += "_AS";
         List<Rule> asExpr = new ArrayList<>(
             List.of(addRule, subRule, asDownRule, addRuleRight, subRuleRight)
@@ -24,7 +24,7 @@ public class MathGrammar extends Grammar {
         Rule divRuleRight = new Rule("(?<left>.*?)/(?<right>.*)", "DIVISION_RIGHT");
         Rule modRule = new Rule("(?<left>.*)mod(?<right>.*)", "MODULUS");
         Rule modRuleRight = new Rule("(?<left>.*?)mod(?<right>.*)", "MODULUS_RIGHT");
-        Rule mmdDownRule = baseDownRule.clone();
+        Rule mmdDownRule = BASE_DOWN_RULE.clone();
         mmdDownRule.id += "_MMD";
         List<Rule> mmdExpr = new ArrayList<>(
             List.of(
@@ -40,13 +40,13 @@ public class MathGrammar extends Grammar {
         // <ex-expr>
         Rule expRule = new Rule("(?<left>.*)\\^(?<right>.*)", "EXPONENTIATION");
         Rule expRuleRight = new Rule("(?<left>.*?)\\^(?<right>.*)", "EXPONENTIATION_RIGHT");
-        Rule expDownRule = baseDownRule.clone();
+        Rule expDownRule = BASE_DOWN_RULE.clone();
         expDownRule.id += "_EXP";
         List<Rule> exExpr = new ArrayList<>(List.of(expRule, expRuleRight, expDownRule));
         // <root>
         Rule parenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(?<inner>.*)", "UNARY_NEGATIVE");
-        List<Rule> rootExpr = new ArrayList<>(List.of(varRule, intRule, parenRule, negRule));
+        List<Rule> rootExpr = new ArrayList<>(List.of(VAR_RULE, INT_RULE, parenRule, negRule));
 
         //// Populate the levels, bottom up
         // <root>

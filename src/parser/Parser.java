@@ -1,5 +1,6 @@
 package parser;
 
+import static grammars.Grammar.VAR_RULE;
 import static java.text.MessageFormat.format;
 
 import grammars.BoolGrammar;
@@ -19,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import parser.errors.IndentationError;
 import parser.errors.InvalidStatementError;
+import parser.errors.TypeError;
 import parser.errors.VariableError;
 
 public class Parser {
@@ -27,6 +29,7 @@ public class Parser {
     private static final Pattern WS_YANK = Pattern.compile("([ \\t]+).*");
     private static final Pattern WS_SPLIT = Pattern.compile("([ \\t]*)(.*)");
     private static final Pattern EMPTY_LINE = Pattern.compile("\\s*(\\?.*)?");
+    private static final Pattern RAY_EXTRACT = Pattern.compile(" *\\[ *(?<ray>.*?) *] *");
 
     private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(?<condition>.*?) *: *");
     private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
@@ -59,6 +62,8 @@ public class Parser {
     private final List<Line> lines;
     private String whitespace;
     private String wsEnglishName;
+
+    //TODO: consider adding instance variable which is current Line
 
     public Parser(String filename) {
         this.whitespace = this.wsEnglishName = "";
@@ -126,6 +131,7 @@ public class Parser {
     }
 
     private boolean stringIsHeterogeneous(String s) {
+        if (s.isEmpty()) return false;
         char toMatch = s.charAt(0);
         for (char c : s.toCharArray()) {
             if (c != toMatch) return true;
@@ -139,6 +145,7 @@ public class Parser {
     }
 
     public int countIndents(String ws, int ln) {
+        if (ws.isEmpty()) return 0;
         //is all the same character
         //that character is the same as we expect
         if (stringIsHeterogeneous(ws)) {
@@ -154,21 +161,28 @@ public class Parser {
         return ws.length() / whitespace.length();
     }
 
-    public boolean parse() {
+    //eventually will probably write to disk right here
+    public String parse(String className) {
         Stack<Map<String, Variable>> scopes = new Stack<>();
         Map<String, Variable> defaultScope = new HashMap<>(1);
         defaultScope.put("argos", ARGOS);
         scopes.push(defaultScope);
         StringBuilder java = new StringBuilder();
-        java.append("public class JudoTranslated {\npublic static void main(String[] args) {");
-        return parseHelper(0, scopes, java);
+        java
+            .append("public class ")
+            .append(className)
+            .append(" {\npublic static void main(String[] args) {");
+        parseHelper(0, scopes, java);
+        java.append("}\n}");
+        return java.toString();
     }
 
-    public boolean parseHelper(
+    public void parseHelper(
         int lineStart,
         Stack<Map<String, Variable>> scopes,
         StringBuilder java
     ) {
+        boolean ifOpen = false;
         for (int i = lineStart; i < lines.size(); i++) {
             int currDepth = scopes.size() - 1; //-1 because scope includes the global scope of argos
             Line lineObj = lines.get(i);
@@ -182,9 +196,16 @@ public class Parser {
                 handleReassignment(trimmed, java, scopes);
             } else if (IF_STMT.matcher(line).matches()) {
                 handleIf(trimmed, java, scopes);
+                ifOpen = true;
             } else if (ELF_STMT.matcher(line).matches()) {
+                if (!ifOpen) {
+                    throw new InvalidStatementError("No if is currently open", ln);
+                }
                 handleElf(trimmed, java, scopes);
             } else if (ELSE_STMT.matcher(line).matches()) {
+                if (!ifOpen) {
+                    throw new InvalidStatementError("No if is currently open", ln);
+                }
                 handleElse(trimmed, java, scopes);
             } else if (FORRANGE_STMT.matcher(line).matches()) {
                 handleForRange(trimmed, java, scopes);
@@ -198,7 +219,6 @@ public class Parser {
                 throw new InvalidStatementError("Invalid statement", ln);
             }
         }
-        return true;
     }
 
     public void checkIndentation(Line line, int level) {
@@ -235,11 +255,100 @@ public class Parser {
                 line.lineNum
             );
         }
+        String javaType = "I WILL CAUSE AN ERROR";
         if (MATH_GRAMMAR.isValid(value)) {
             curScope.put(varName, new Variable(varName, Type.INT));
+            javaType = "int";
         } else if (BOOL_GRAMMAR.isValid(value)) {
             curScope.put(varName, new Variable(varName, Type.BOOL));
-        } else if (RAY_GRAMMAR.isValid(value)) {}
+            javaType = "boolean ";
+        } else if (STRING_GRAMMAR.isValid(value)) {
+            curScope.put(varName, new Variable(varName, Type.STRING));
+            javaType = "String";
+        } else if (RAY_GRAMMAR.isValid(value)) {
+            Type t = categorizeRay(value, scopes, line);
+            //noinspection ConstantConditions
+            switch (t) {
+                case INT_LIST -> {
+                    javaType = "int[]";
+                }
+                case STRING_LIST -> {
+                    javaType = "String[]";
+                }
+                case BOOL_LIST -> {
+                    javaType = "boolean[]";
+                }
+            }
+            curScope.put(varName, new Variable(varName, t));
+            value = value.replaceAll("\\[", "{").replaceAll("]", "}");
+        } else {
+            throw new InvalidStatementError("Unrecognized expression", line.lineNum);
+        }
+        java.append(javaType).append(" ").append(varName).append(" = ").append(value).append(";\n");
+    }
+
+    private Type categorizeRay(String ray, Stack<Map<String, Variable>> scopes, Line line) {
+        Type overall = null;
+        Matcher rayMatch = armMatcher(RAY_EXTRACT, ray);
+        String[] list = rayMatch.group("ray").split(",");
+        for (String el : list) {
+            Type curr;
+            if (VAR_RULE.validate(el)) {
+                curr = searchScopes(scopes, el).type;
+            } else if (MATH_GRAMMAR.isValid(el)) {
+                curr = Type.INT;
+            } else if (STRING_GRAMMAR.isValid(el)) {
+                curr = Type.STRING;
+            } else if (BOOL_GRAMMAR.isValid(el)) {
+                curr = Type.BOOL;
+            } else {
+                throw new InvalidStatementError("Bad statement in ray literal");
+            }
+            if (overall == null) {
+                overall = curr;
+            } else if (curr != overall) {
+                throw new TypeError("Inconsistent types in ray literal", line.lineNum);
+            }
+        }
+        if (overall != null) {
+            switch (overall) {
+                case INT -> {
+                    return Type.INT_LIST;
+                }
+                case STRING -> {
+                    return Type.STRING_LIST;
+                }
+                case BOOL -> {
+                    return Type.BOOL_LIST;
+                }
+            }
+        }
+        return null;
+    }
+
+    //TODO: need a translation function for converting keywords to Java equivalents
+
+    private Variable searchScopes(Stack<Map<String, Variable>> scopes, String varName) {
+        return searchScopes(scopes, varName, true);
+    }
+
+    private Variable searchScopes(
+        Stack<Map<String, Variable>> scopes,
+        String varName,
+        boolean doThrow
+    ) {
+        //I can take advantage of the silliness of Java's built-in stack to just
+        //iterate through it, top down.
+        for (int i = scopes.size() - 1; i >= 0; i--) {
+            var scope = scopes.get(i);
+            if (scope.containsKey(varName)) {
+                return scope.get(varName);
+            }
+        }
+        if (doThrow) {
+            throw new VariableError(format("Variable `{0}` not found", varName));
+        }
+        return null;
     }
 
     public void handleReassignment(
@@ -287,7 +396,7 @@ public class Parser {
         }
     }
 
-    private static class Variable {
+    public static class Variable {
 
         public Variable(String identifier, Type type) {
             this.identifier = identifier;

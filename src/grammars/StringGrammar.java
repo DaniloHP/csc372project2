@@ -10,7 +10,7 @@ public class StringGrammar extends Grammar {
     public StringGrammar() {
         super();
         Rule strLiteralRule = new Rule("\\\"[\\p{Print}&&[^\\\"]]*?\\\"", "STR_LITERAL");
-        List<Rule> strExpr = new ArrayList<>(List.of(strLiteralRule, varRule));
+        List<Rule> strExpr = new ArrayList<>(List.of(strLiteralRule, VAR_RULE));
         this.levels.add(strExpr);
     }
 }

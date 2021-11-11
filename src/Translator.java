@@ -7,6 +7,5 @@ public class Translator {
             System.err.println("Expected the filename of a Judo file.");
         }
         Parser parser1 = new Parser("", "");
-        parser1.parse();
     }
 }

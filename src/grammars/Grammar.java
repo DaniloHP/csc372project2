@@ -14,11 +14,15 @@ public abstract class Grammar {
     );
     protected final List<List<Rule>> levels;
     //Rules that show up in a lot of grammars. Paren rule could also be here
-    protected final Rule baseDownRule;
-    protected final Rule intRule;
-    protected final Rule varRule;
+    protected static final Rule BASE_DOWN_RULE = new Rule("(?<inner>.*)", "DOWN_RULE");
+    protected static final Rule INT_RULE = new Rule("\\d+", "INTEGERS");
+    public static final Rule VAR_RULE = genVarRule();
 
     protected Grammar() {
+        levels = new ArrayList<>();
+    }
+
+    private static Rule genVarRule() {
         StringBuilder sb = new StringBuilder("(?!");
         int i = 1;
         for (String keyword : RESERVED_KEYWORDS) {
@@ -27,10 +31,7 @@ public abstract class Grammar {
         }
         sb.append(")");
         String re = String.format("^ *%s(?<var>[\\w&&[^\\d]][\\w]{0,31}) *", sb);
-        this.varRule = new Rule(re, "VARIABLES");
-        this.intRule = new Rule("\\d+", "INTEGERS");
-        this.baseDownRule = new Rule("(?<inner>.*)", "DOWN_RULE");
-        levels = new ArrayList<>();
+        return new Rule(re, "VARIABLES");
     }
 
     public boolean isValid(CharSequence toCheck) {
