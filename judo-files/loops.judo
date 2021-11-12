@@ -1,0 +1,6 @@
+for i in 1..10:
+    hallpass
+for i in 1..10[2]:
+    hallpass
+for i in array:
+    hallpass

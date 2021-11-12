@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
@@ -41,11 +40,19 @@ public class ParserTests {
         System.out.println("<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>");
         final Parser p = new Parser("judo-files/assign.judo");
         String className = "TestAssignments";
-        String code = p.parse(className);
-        assertTrue(runGeneratedJava(code, className));
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
     }
 
-    public boolean runGeneratedJava(String code, String className) {
+    @Test
+    void testLoops() {
+        final Parser p = new Parser("judo-files/loops.judo");
+        String className = "TestLoops";
+        String code = p.parseTesting(className);
+        runGeneratedJava(code, className);
+    }
+
+    public void runGeneratedJava(String code, String className) {
         System.out.printf("Running test for class %s\n", className);
         String classFileName = OUT_DIR + className;
         String fileName = classFileName + ".java";
@@ -56,21 +63,14 @@ public class ParserTests {
             e.printStackTrace();
         }
         try {
-            Runtime.getRuntime().exec(String.format("javac %s", fileName));
-            Runtime.getRuntime().exec(String.format("java %s", classFileName));
-        } catch (IOException e) {
+            Runtime
+                .getRuntime()
+                .exec(String.format("sh -c javac %s && java %s", fileName, classFileName))
+                .waitFor();
+        } catch (IOException | InterruptedException e) {
             Assertions.fail(String.format("Class %s crashed when running: %s\n", className, e));
-            return false;
+            return;
         }
         System.out.printf("Class %s didn't crash\n", className);
-        return true;
-    }
-
-    public String inputStreamToString(InputStream stream) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        while (stream.available() > 0) {
-            sb.append(new String(stream.readAllBytes()));
-        }
-        return new String(sb);
     }
 }
