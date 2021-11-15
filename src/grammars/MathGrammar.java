@@ -5,7 +5,7 @@ import java.util.List;
 
 public class MathGrammar extends Grammar {
 
-    public MathGrammar() {
+    public MathGrammar(VarGrammar vg) {
         super();
         // <as_expr>
         Rule addRule = new Rule("(?<left>.*)\\+(?<right>.*)", "ADDITION");
@@ -46,10 +46,12 @@ public class MathGrammar extends Grammar {
         // <root>
         Rule parenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(?<inner>.*)", "UNARY_NEGATIVE");
-        List<Rule> rootExpr = new ArrayList<>(List.of(VAR_RULE, INT_RULE, parenRule, negRule));
+        Rule mathVarRule = VAR_RULE.clone();
+        List<Rule> rootExpr = new ArrayList<>(List.of(mathVarRule, INT_RULE, parenRule, negRule));
 
         //// Populate the levels, bottom up
         // <root>
+        mathVarRule.addChildren("var", vg.exposeEntrypoint());
         parenRule.addChildren("inner", asExpr);
         negRule.addChildren("inner", asExpr);
 

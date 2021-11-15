@@ -7,10 +7,12 @@ public class StringGrammar extends Grammar {
 
     //This very simple grammar allows string literals and variables, no string
     //concatenation.
-    public StringGrammar() {
+    public StringGrammar(VarGrammar vg) {
         super();
         Rule strLiteralRule = new Rule("\\\"[\\p{Print}&&[^\\\"]]*?\\\"", "STR_LITERAL");
-        List<Rule> strExpr = new ArrayList<>(List.of(strLiteralRule, VAR_RULE));
+        Rule strVarRule = VAR_RULE.clone();
+        List<Rule> strExpr = new ArrayList<>(List.of(strLiteralRule, strVarRule));
+        strVarRule.addChildren("var", vg.exposeEntrypoint());
         this.levels.add(strExpr);
     }
 }

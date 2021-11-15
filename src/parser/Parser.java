@@ -1,12 +1,8 @@
 package parser;
 
-import static grammars.Grammar.VAR_RULE;
 import static java.text.MessageFormat.format;
 
-import grammars.BoolGrammar;
-import grammars.MathGrammar;
-import grammars.RayGrammar;
-import grammars.StringGrammar;
+import grammars.*;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -53,9 +49,10 @@ public class Parser {
     private static final Pattern PASS_STMT = Pattern.compile("[ \\t]*hallpass[ \\t]*");
 
     private static final Variable ARGOS = new Variable("argos", Type.INT_LIST);
-    private static final StringGrammar STRING_GRAMMAR = new StringGrammar();
-    private static final MathGrammar MATH_GRAMMAR = new MathGrammar();
-    private static final BoolGrammar BOOL_GRAMMAR = new BoolGrammar(MATH_GRAMMAR);
+    private static final VarGrammar VAR_GRAMMAR = new VarGrammar();
+    private static final StringGrammar STRING_GRAMMAR = new StringGrammar(VAR_GRAMMAR);
+    private static final MathGrammar MATH_GRAMMAR = new MathGrammar(VAR_GRAMMAR);
+    private static final BoolGrammar BOOL_GRAMMAR = new BoolGrammar(MATH_GRAMMAR, VAR_GRAMMAR);
     private static final RayGrammar RAY_GRAMMAR = new RayGrammar(
         BOOL_GRAMMAR,
         MATH_GRAMMAR,
@@ -178,6 +175,7 @@ public class Parser {
 
     private String parse(String className, boolean testing) {
         ScopeStack scopes = new ScopeStack(testing);
+        VarRule.setScopes(scopes); //not proud of this
         Map<String, Variable> defaultScope = new HashMap<>(1);
         defaultScope.put("argos", ARGOS);
         scopes.push(defaultScope);
@@ -281,7 +279,7 @@ public class Parser {
         } else if (RAY_GRAMMAR.isValid(value)) {
             Type t = categorizeRay(value, scopes, line);
             //noinspection ConstantConditions
-            javaType = t.label;
+            javaType = t.javaType;
             curScope.put(varName, new Variable(varName, t));
             value = value.replaceAll("\\[", "{").replaceAll("]", "}");
         } else {
@@ -296,7 +294,7 @@ public class Parser {
         String[] list = rayMatch.group("ray").split(",");
         for (String el : list) {
             Type curr;
-            if (VAR_RULE.validate(el)) {
+            if (VAR_GRAMMAR.isValid(el)) {
                 curr = scopes.find(el).type;
             } else if (MATH_GRAMMAR.isValid(el)) {
                 curr = Type.INT;
@@ -438,12 +436,12 @@ public class Parser {
 
     public static class Variable {
 
+        public final String identifier;
+        public final Type type;
+
         public Variable(String identifier, Type type) {
             this.identifier = identifier;
             this.type = type;
         }
-
-        String identifier;
-        Type type;
     }
 }

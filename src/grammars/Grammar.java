@@ -3,35 +3,21 @@ package grammars;
 import static java.text.MessageFormat.format;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public abstract class Grammar {
 
-    public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F")
-    );
     protected final List<List<Rule>> levels;
     //Rules that show up in a lot of grammars. Paren rule could also be here
     protected static final Rule BASE_DOWN_RULE = new Rule("(?<inner>.*)", "DOWN_RULE");
     protected static final Rule INT_RULE = new Rule("\\d+", "INTEGERS");
-    public static final Rule VAR_RULE = genVarRule();
+    public static final VarRule VAR_RULE = new VarRule(
+        "^ *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *",
+        "VAR"
+    );
 
     protected Grammar() {
         levels = new ArrayList<>();
-    }
-
-    private static Rule genVarRule() {
-        StringBuilder sb = new StringBuilder("(?!");
-        int i = 1;
-        for (String keyword : RESERVED_KEYWORDS) {
-            sb.append(format("({0}\\b){1}", keyword, i < RESERVED_KEYWORDS.size() ? "|" : ""));
-            i++;
-        }
-        sb.append(")");
-        String re = String.format("^ *%s(?<var>[\\w&&[^\\d]][\\w]{0,31}) *", sb);
-        return new Rule(re, "VARIABLES");
     }
 
     public boolean isValid(CharSequence toCheck) {

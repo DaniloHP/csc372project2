@@ -8,19 +8,19 @@ public enum Type {
     STRING_LIST("String[]", STRING),
     BOOL_LIST("boolean[]", BOOL);
 
-    public final String label;
+    public final String javaType;
     public final Type listOf;
 
-    Type(String label, Type listOf) {
-        this.label = label;
+    Type(String javaType, Type listOf) {
+        this.javaType = javaType;
         this.listOf = listOf;
     }
 
     public boolean isArray() {
-        return this.label.endsWith("[]");
+        return this.javaType.endsWith("[]");
     }
 
     public String toString() {
-        return this.label;
+        return this.javaType;
     }
 }

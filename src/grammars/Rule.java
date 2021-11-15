@@ -1,5 +1,6 @@
 package grammars;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class Rule implements Cloneable {
                 return true;
             }
             var resultVector = new boolean[children.size()];
+            Arrays.fill(resultVector, false);
             int i = 0;
             for (String k : children.keySet()) {
                 String currGroup = matcher.group(k).strip();

@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import grammars.*;
 import org.junit.jupiter.api.Test;
+import parser.errors.VariableError;
 
 public class GrammarTests {
 
-    MathGrammar mathGrammar = new MathGrammar();
-    StringGrammar strGrammar = new StringGrammar();
-    BoolGrammar boolGrammar = new BoolGrammar(mathGrammar);
+    VarGrammar varGrammar = new VarGrammar();
+    MathGrammar mathGrammar = new MathGrammar(varGrammar);
+    StringGrammar strGrammar = new StringGrammar(varGrammar);
+    BoolGrammar boolGrammar = new BoolGrammar(mathGrammar, varGrammar);
     RayGrammar rayGrammar = new RayGrammar(boolGrammar, mathGrammar, strGrammar);
 
     @Test
@@ -114,25 +116,27 @@ public class GrammarTests {
 
     @Test
     void testVars() {
-        assertTrue(mathGrammar.isValid("___var_11_xy_9"));
-        assertTrue(boolGrammar.isValid("___var_11_xy_9"));
-        assertTrue(mathGrammar.isValid("i"));
-        assertTrue(boolGrammar.isValid("i"));
-        for (String keyword : Grammar.RESERVED_KEYWORDS) {
-            assertTrue(mathGrammar.isValid("_" + keyword));
-            assertTrue(boolGrammar.isValid("_" + keyword));
-            assertTrue(mathGrammar.isValid(keyword + "_"));
-            assertTrue(boolGrammar.isValid(keyword + "_"));
+        VarGrammar vg = new VarGrammar();
+        VarRule rule = Grammar.VAR_RULE;
+        assertTrue(rule.validate("___var_11_xy_9"));
+        assertTrue(rule.validate("___var_11_xy_9"));
+        assertTrue(rule.validate("i"));
+        assertTrue(rule.validate("i"));
+        for (String keyword : VarRule.RESERVED_KEYWORDS) {
+            assertTrue(rule.validate("_" + keyword));
+            assertTrue(rule.validate("_" + keyword));
+            assertTrue(rule.validate(keyword + "_"));
+            assertTrue(rule.validate(keyword + "_"));
         }
 
-        assertFalse(mathGrammar.isValid("_12345678901234567890123456789012"));
-        assertFalse(boolGrammar.isValid("_12345678901234567890123456789012"));
+        assertFalse(rule.validate("_12345678901234567890123456789012"));
+        assertFalse(rule.validate("_12345678901234567890123456789012"));
         //^ Variable longer than 32 chars
-        assertFalse(mathGrammar.isValid("0__bad_var_11_xx_1"));
-        assertFalse(boolGrammar.isValid("0__bad_var_11_xx_1"));
-        for (String keyword : Grammar.RESERVED_KEYWORDS) {
-            assertFalse(mathGrammar.isValid(keyword));
-            assertFalse(boolGrammar.isValid("T == 1 + " + keyword));
+        assertFalse(rule.validate("0__bad_var_11_xx_1"));
+        assertFalse(rule.validate("0__bad_var_11_xx_1"));
+        for (String keyword : VarRule.RESERVED_KEYWORDS) {
+            assertThrows(VariableError.class, () -> rule.validate(keyword, null, true, false));
+            assertFalse(rule.validate("T == 1 + " + keyword, null, true, false));
         }
     }
 }

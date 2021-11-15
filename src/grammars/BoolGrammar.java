@@ -9,7 +9,7 @@ public class BoolGrammar extends Grammar {
      * BooleanGrammar depends on MathGrammar for comparisons, so it's entrypoint
      * *must* be provided.
      */
-    public BoolGrammar(MathGrammar mg) {
+    public BoolGrammar(MathGrammar mg, VarGrammar vg) {
         super();
         //<or_expr>
         Rule orRule = new Rule("(?<left>.*) +or +(?<right>.*)", "OR");
@@ -26,7 +26,7 @@ public class BoolGrammar extends Grammar {
         List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
-        Rule notRule = new Rule("not +(?<inner>.*)");
+        Rule notRule = new Rule("not +(?<inner>.*)", "UNARY NOT");
         Rule notDownRuleToRoot = BASE_DOWN_RULE.clone();
         notDownRuleToRoot.id += "_TO_ROOT";
         Rule notDownRuleToCmp = BASE_DOWN_RULE.clone();
@@ -36,7 +36,8 @@ public class BoolGrammar extends Grammar {
         //<bool>
         Rule bool = new Rule("[TF]", "BOOL");
         Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
-        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, VAR_RULE, boolParenRule));
+        Rule boolVarRule = VAR_RULE.clone();
+        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, boolParenRule, boolVarRule));
 
         //<comparison>: !=, ==, <, <=, >, >=
         Rule notEqualRule = new Rule("(?<left>.*) +!= +(?<right>.*)", "NOT_EQUAL");
@@ -88,6 +89,7 @@ public class BoolGrammar extends Grammar {
         );
         //<root>
         boolParenRule.addChildren("inner", orExpr);
+        boolVarRule.addChildren("var", vg.exposeEntrypoint());
 
         //<not_expr>
         notRule.addChildren("inner", boolRootExpr);
