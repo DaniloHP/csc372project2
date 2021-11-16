@@ -1,11 +1,28 @@
 package tests;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import grammars.*;
+import grammars.BoolGrammar;
+import grammars.Grammar;
+import grammars.MathGrammar;
+import grammars.RayGrammar;
+import grammars.StringGrammar;
+import grammars.VarGrammar;
+import grammars.VarRule;
+import java.util.HashMap;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import parser.Parser;
+import parser.ScopeStack;
+import parser.Type;
+import parser.errors.TypeError;
 import parser.errors.VariableError;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GrammarTests {
 
     VarGrammar varGrammar = new VarGrammar();
@@ -14,6 +31,7 @@ public class GrammarTests {
     BoolGrammar boolGrammar = new BoolGrammar(mathGrammar, varGrammar);
     RayGrammar rayGrammar = new RayGrammar(boolGrammar, mathGrammar, strGrammar);
 
+    @Order(1)
     @Test
     void testMathGrammar() {
         assertTrue(mathGrammar.isValid("x"));
@@ -41,6 +59,7 @@ public class GrammarTests {
         assertFalse(mathGrammar.isValid("100 mod (2 * (4/10)"));
     }
 
+    @Order(2)
     @Test
     void testBooleanGrammar() {
         assertTrue(boolGrammar.isValid("T"));
@@ -74,6 +93,7 @@ public class GrammarTests {
         assertFalse(boolGrammar.isValid("(x and (z == 10)) and () or (T)"));
     }
 
+    @Order(3)
     @Test
     void testRays() {
         assertTrue(rayGrammar.isValid("[1]"));
@@ -98,6 +118,7 @@ public class GrammarTests {
         assertFalse(rayGrammar.isValid("[1,2, \"three\"]"));
     }
 
+    @Order(4)
     @Test
     void testStrings() {
         assertTrue(strGrammar.isValid("\"\""));
@@ -114,6 +135,7 @@ public class GrammarTests {
         assertFalse(strGrammar.isValid("\"a string with poorly\"closed quotes\""));
     }
 
+    @Order(5)
     @Test
     void testVars() {
         VarGrammar vg = new VarGrammar();
@@ -138,5 +160,29 @@ public class GrammarTests {
             assertThrows(VariableError.class, () -> rule.validate(keyword, null, true, false));
             assertFalse(rule.validate("T == 1 + " + keyword, null, true, false));
         }
+    }
+
+    /**
+     * This test runs last because it messes with static fields, and if it
+     * fails, the static fields might not be reset to their default values.
+     */
+    @Order(6)
+    @Test
+    void testStrictTypeChecking() {
+        VarRule rule = new VarRule(Grammar.VAR_RULE, "");
+        ScopeStack scopes = new ScopeStack();
+        VarRule.useScopes(scopes);
+        rule.useType(Type.INT);
+        scopes.add(new HashMap<>());
+        Parser.Variable i = new Parser.Variable("i", Type.INT);
+        scopes.addToCurrScope(i);
+        assertTrue(rule.validate("i"));
+        assertThrows(VariableError.class, () -> rule.validate("j"));
+
+        rule.useType(Type.STRING);
+        assertThrows(TypeError.class, () -> rule.validate("i")); //i is an int
+        Parser.Variable str = new Parser.Variable("str", Type.STRING);
+        assertTrue(rule.validate(" str "));
+        VarRule.useScopes(null);
     }
 }

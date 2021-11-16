@@ -19,17 +19,28 @@ public class VarRule extends Rule {
     );
     private static ScopeStack scopes;
 
+    private Type type;
+
     public VarRule(CharSequence regexStr, String id) {
         super(regexStr, id);
     }
 
-    public static void setScopes(ScopeStack scopes) {
+    public VarRule(Rule other, String newId) {
+        super(other, newId);
+    }
+
+    public void useType(Type type) {
+        this.type = type;
+    }
+
+    public static void useScopes(ScopeStack scopes) {
         VarRule.scopes = scopes;
     }
 
     @Override
     public boolean validate(CharSequence toCheck) {
-        return this.validate(toCheck, null, false, false);
+        //this.type may be null, and that's fine.
+        return this.validate(toCheck, this.type, false, false);
     }
 
     public boolean validate(

@@ -11,7 +11,7 @@ public class Rule implements Cloneable {
 
     protected Pattern regex;
     protected Map<String, List<Rule>> children;
-    public String id; //for debugging
+    private String id; //for debugging
 
     public Rule(CharSequence regexStr) {
         children = new HashMap<>();
@@ -21,6 +21,11 @@ public class Rule implements Cloneable {
     public Rule(CharSequence regexStr, String id) {
         this(regexStr);
         this.id = id;
+    }
+
+    public Rule(Rule other, String newId) {
+        this(other.regex.pattern());
+        this.id = newId;
     }
 
     public void addChildren(String group, List<Rule> level) {
@@ -59,22 +64,6 @@ public class Rule implements Cloneable {
             return allTrue(resultVector);
         } else {
             return false;
-        }
-    }
-
-    /**
-     * SHOULD ONLY EVER BE USED WITH RULES THAT HAVE NO CHILDREN YET
-     */
-    @Override
-    public Rule clone() {
-        try {
-            Rule clone = (Rule) super.clone();
-            clone.regex = this.regex;
-            clone.children = new HashMap<>();
-            clone.id = this.id;
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
         }
     }
 

@@ -10,7 +10,6 @@ public class RayGrammar extends Grammar {
         //<rays>, <int_list>, <string_list>
         Rule rayRule = new Rule("\\[ *(?<ray>.+?) *\\]", "RAY_RULE");
         List<Rule> rayExpr = new ArrayList<>(List.of(rayRule));
-
         Rule intRayRule = new RayRule(
             "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)",
             "INT_LIST"

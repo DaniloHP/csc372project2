@@ -2,6 +2,7 @@ package grammars;
 
 import java.util.ArrayList;
 import java.util.List;
+import parser.Type;
 
 public class BoolGrammar extends Grammar {
 
@@ -14,29 +15,26 @@ public class BoolGrammar extends Grammar {
         //<or_expr>
         Rule orRule = new Rule("(?<left>.*) +or +(?<right>.*)", "OR");
         Rule orRuleRight = new Rule("(?<left>.*) +or +(?<right>.*)", "OR_RIGHT");
-        Rule orDownRule = BASE_DOWN_RULE.clone();
-        orDownRule.id += "_OR";
+        Rule orDownRule = new Rule(BASE_DOWN_RULE, "DOWN_OR");
         List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
 
         //<and_expr>
         Rule andRule = new Rule("(?<left>.*) +and +(?<right>.*)", "AND");
         Rule andRuleRight = new Rule("(?<left>.*?) +and +(?<right>.*)", "AND_RIGHT");
-        Rule andDownRule = BASE_DOWN_RULE.clone();
-        andDownRule.id += "_AND";
+        Rule andDownRule = new Rule(BASE_DOWN_RULE, "DOWN_AND");
         List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
         Rule notRule = new Rule("not +(?<inner>.*)", "UNARY NOT");
-        Rule notDownRuleToRoot = BASE_DOWN_RULE.clone();
-        notDownRuleToRoot.id += "_TO_ROOT";
-        Rule notDownRuleToCmp = BASE_DOWN_RULE.clone();
-        notDownRuleToRoot.id += "_TO_CMP";
+        Rule notDownRuleToRoot = new Rule(BASE_DOWN_RULE, "DOWN_TO_ROOT");
+        Rule notDownRuleToCmp = new Rule(BASE_DOWN_RULE, "DOWN_TO_CMP");
         List<Rule> notExpr = new ArrayList<>(List.of(notRule, notDownRuleToRoot, notDownRuleToCmp));
 
         //<bool>
         Rule bool = new Rule("[TF]", "BOOL");
         Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
-        Rule boolVarRule = VAR_RULE.clone();
+        VarRule boolVarRule = new VarRule(VAR_RULE, "BOOL_VAR");
+        boolVarRule.useType(Type.BOOL);
         List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, boolParenRule, boolVarRule));
 
         //<comparison>: !=, ==, <, <=, >, >=
