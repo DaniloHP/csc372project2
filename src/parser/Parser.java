@@ -30,7 +30,9 @@ public class Parser {
     private static final Pattern WS_YANK = Pattern.compile("(?<whitespace>[ \\t]+)(?<rest>.*)");
     private static final Pattern WS_SPLIT = Pattern.compile("(?<whitespace>[ \\t]*)(?<rest>.*)");
     private static final Pattern EMPTY_LINE = Pattern.compile("\\s*(\\?.*)?");
-    private static final Pattern RAY_EXTRACT = Pattern.compile(" *\\[ *(?<ray>.*?) *] *");
+    private static final Pattern INDEXER_ACCESS = Pattern.compile(
+        " *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *\\[ *(?<index>.*?) *]"
+    );
 
     private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(?<condition>.*?) *: *");
     private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
@@ -278,7 +280,8 @@ public class Parser {
                 line.lineNum
             );
         }
-        String javaType = "I WILL CAUSE AN ERROR";
+        String javaType;
+        Matcher indexer = INDEXER_ACCESS.matcher(value);
         if (MATH_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.INT));
             javaType = "int";
@@ -293,10 +296,46 @@ public class Parser {
             javaType = t.javaType;
             curScope.put(varName, new Variable(varName, t));
             value = value.replaceAll("\\[", "{").replaceAll("]", "}");
+        } else if (indexer.matches()) {
+            String rayName = indexer.group("var");
+            Variable ray = scopes.find(rayName);
+            if (ray.type.isArray()) {
+                throw new TypeError(
+                    format("Variable `{0}` isn't an array type and can't be indexed", rayName),
+                    line.lineNum
+                );
+            }
+            Type t = ray.type.listOf;
+            javaType = t.javaType;
+            validateByScalarType(indexer.group("index"), t);
+            curScope.put(varName, new Variable(varName, t));
         } else {
-            throw new InvalidStatementError("Unrecognized expression", line.lineNum);
+            throw new InvalidStatementError(
+                format("Unrecognized expression: {0}", value),
+                line.lineNum
+            );
         }
-        java.append(javaType).append(" ").append(varName).append(" = ").append(finalReplacements(value)).append(";\n");
+        java
+            .append(javaType)
+            .append(" ")
+            .append(varName)
+            .append(" = ")
+            .append(finalReplacements(value))
+            .append(";\n");
+    }
+
+    private void validateByScalarType(CharSequence expression, Type expected) {
+        switch (expected) {
+            case INT -> {
+                MATH_GRAMMAR.validate(expression);
+            }
+            case BOOL -> {
+                BOOL_GRAMMAR.validate(expression);
+            }
+            case STRING -> {
+                STRING_GRAMMAR.validate(expression);
+            }
+        }
     }
 
     private String finalReplacements(CharSequence input) {
@@ -318,20 +357,36 @@ public class Parser {
         Variable var = scopes.find(varName);
         boolean passed;
         String arrayReinit = "";
-        switch (var.type) {
-            case INT -> {
-                passed = MATH_GRAMMAR.validateNoThrow(value);
+        Matcher indexer = INDEXER_ACCESS.matcher(value);
+        if (indexer.matches()) {
+            String rayName = indexer.group("var");
+            Variable ray = scopes.find(rayName);
+            if (ray.type.isArray()) {
+                throw new TypeError(
+                    format("Variable `{0}` isn't an array type and can't be indexed", rayName),
+                    line.lineNum
+                );
             }
-            case BOOL -> {
-                passed = BOOL_GRAMMAR.validateNoThrow(value);
-            }
-            case STRING -> {
-                passed = STRING_GRAMMAR.validateNoThrow(value);
-            }
-            default -> { //one of the list types
-                passed = RAY_GRAMMAR.categorize(value) == var.type;
-                arrayReinit = format("new {0}[]", var.type.listOf.javaType);
-                value = value.replaceFirst("\\[", "{").replace(']', '}');
+            Type t = ray.type.listOf;
+            validateByScalarType(indexer.group("index"), t);
+            //^ this will throw if it isn't valid
+            passed = true;
+        } else {
+            switch (var.type) {
+                case INT -> {
+                    passed = MATH_GRAMMAR.validateNoThrow(value);
+                }
+                case BOOL -> {
+                    passed = BOOL_GRAMMAR.validateNoThrow(value);
+                }
+                case STRING -> {
+                    passed = STRING_GRAMMAR.validateNoThrow(value);
+                }
+                default -> { //one of the list types
+                    passed = RAY_GRAMMAR.categorize(value) == var.type;
+                    arrayReinit = format("new {0}[]", var.type.listOf.javaType);
+                    value = value.replaceFirst("\\[", "{").replace(']', '}');
+                }
             }
         }
         if (!passed) {
@@ -344,7 +399,12 @@ public class Parser {
                 line.lineNum
             );
         }
-        java.append(varName).append(" = ").append(arrayReinit).append(finalReplacements(value)).append(";\n");
+        java
+            .append(varName)
+            .append(" = ")
+            .append(arrayReinit)
+            .append(finalReplacements(value))
+            .append(";\n");
     }
 
     public void handleIf(Line line, StringBuilder java, ScopeStack scopes) {

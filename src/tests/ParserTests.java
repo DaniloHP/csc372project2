@@ -63,6 +63,14 @@ public class ParserTests {
         runGeneratedJava(code, className);
     }
 
+    @Test
+    void testRays() {
+        final Parser p = new Parser("judo-files/rays.judo");
+        String className = "TestRays";
+        String code = p.parseTesting(className);
+        runGeneratedJava(code, className);
+    }
+
     public void runGeneratedJava(String code, String className) {
         Path dir = Paths.get(OUT_DIR);
         if (!Files.exists(dir)) {
@@ -84,7 +92,7 @@ public class ParserTests {
         try {
             Runtime
                 .getRuntime()
-                .exec(String.format("javac %s && java %s", fileName, classFileName))
+                .exec(String.format("sh -c javac %s && java %s", fileName, classFileName))
                 .waitFor();
         } catch (IOException | InterruptedException e) {
             //TODO: this always tells you it didn't crash even when it did.
