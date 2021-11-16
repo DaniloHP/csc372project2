@@ -9,7 +9,6 @@ import parser.errors.VariableError;
 
 public class ScopeStack extends Stack<Map<String, Variable>> {
 
-    boolean testing;
 
     public ScopeStack() {
         super();
@@ -17,7 +16,6 @@ public class ScopeStack extends Stack<Map<String, Variable>> {
 
     public ScopeStack(boolean testing) {
         this();
-        this.testing = testing;
     }
 
     public void addToCurrScope(CharSequence varName, Variable var) {
@@ -49,10 +47,8 @@ public class ScopeStack extends Stack<Map<String, Variable>> {
                 return scope.get(varName);
             }
         }
-        if (doThrow && !this.testing) {
+        if (doThrow) {
             throw new VariableError(format("Variable `{0}` not found", varName));
-        } else if (testing) {
-            return new Variable("~testing~", Type.INT_LIST);
         }
         return null;
     }

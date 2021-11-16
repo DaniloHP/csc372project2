@@ -191,7 +191,7 @@ public class Parser {
             .append("\n")
             .append("public class ")
             .append(className)
-            .append(" {\npublic static void main(String[] args)");
+            .append(" {\npublic static void main(String[] argos) ");
         parseBlock(0, scopes, java);
         java.append("}"); //closes class {
         return java.toString();
@@ -266,6 +266,7 @@ public class Parser {
         return m;
     }
 
+    //TODO: INDEXER ACCESSES!
     public void handleAssignment(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(ASSIGN_STMT, line.judo);
         String varName = m.group("var");
@@ -295,10 +296,20 @@ public class Parser {
         } else {
             throw new InvalidStatementError("Unrecognized expression", line.lineNum);
         }
-        java.append(javaType).append(" ").append(varName).append(" = ").append(value).append(";\n");
+        java.append(javaType).append(" ").append(varName).append(" = ").append(finalReplacements(value)).append(";\n");
     }
 
-    //TODO: need a translation function for converting keywords to Java equivalents
+    private String finalReplacements(CharSequence input) {
+        String res = input.toString().trim();
+        String re = "( +{0} +)|(^{0} +)|( +{0}$)|({0})";
+        res =
+            res
+                .replaceAll(format(re, "T"), " true ")
+                .replaceAll(format(re, "F"), " false ")
+                .replaceAll(format(re, "and"), " && ")
+                .replaceAll(format(re, "or"), " || ");
+        return res;
+    }
 
     public void handleReassignment(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(REASSIGN_STMT, line.judo);
@@ -329,10 +340,11 @@ public class Parser {
                     "Variable `{0}` was previously assigned type {1}",
                     varName,
                     var.type.javaType
-                ), line.lineNum
+                ),
+                line.lineNum
             );
         }
-        java.append(varName).append(" = ").append(arrayReinit).append(value).append(";\n");
+        java.append(varName).append(" = ").append(arrayReinit).append(finalReplacements(value)).append(";\n");
     }
 
     public void handleIf(Line line, StringBuilder java, ScopeStack scopes) {
@@ -340,7 +352,7 @@ public class Parser {
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition);
         scopes.pushNewScope();
-        java.append("if (").append(condition).append(") ");
+        java.append("if (").append(finalReplacements(condition)).append(") ");
     }
 
     public void handleElf(Line line, StringBuilder java, ScopeStack scopes) {
@@ -348,7 +360,7 @@ public class Parser {
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition);
         scopes.pushNewScope();
-        java.append("else if (").append(condition).append(") ");
+        java.append("else if (").append(finalReplacements(condition)).append(") ");
     }
 
     public void handleElse(Line line, StringBuilder java, ScopeStack scopes) {
@@ -395,14 +407,14 @@ public class Parser {
             .append(" = ")
             .append(lo)
             .append("; ")
-            .append(lo)
+            .append(loopVar)
             .append(" < ")
             .append(hi)
             .append("; ")
             .append(loopVar)
             .append(" += ")
             .append(step)
-            .append(")");
+            .append(") ");
     }
 
     //Handling: Judo: for(loopVar : iterable)
@@ -429,13 +441,14 @@ public class Parser {
         Matcher m = armMatcher(LOOP_STMT, line.judo);
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition); //throws on its own
-        java.append("while(").append(condition).append(") ");
+        java.append("while(").append(finalReplacements(condition)).append(") ");
     }
 
     public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(PRINT_STMT, line.judo);
         String arg = m.group("argument");
-        java.append("System.out.println(").append(arg).append(");\n");
+        //TODO: make sure arg matches at least something
+        java.append("System.out.println(").append(finalReplacements(arg)).append(");\n");
     }
 
     private static class Line {
