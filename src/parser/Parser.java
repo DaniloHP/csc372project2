@@ -2,7 +2,12 @@ package parser;
 
 import static java.text.MessageFormat.format;
 
-import grammars.*;
+import grammars.BoolGrammar;
+import grammars.MathGrammar;
+import grammars.RayGrammar;
+import grammars.StringGrammar;
+import grammars.VarGrammar;
+import grammars.VarRule;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -192,15 +197,17 @@ public class Parser {
         return java.toString();
     }
 
-    public void parseBlock(int lineStart, ScopeStack scopes, StringBuilder java) {
+    public int parseBlock(int lineStart, ScopeStack scopes, StringBuilder java) {
         java.append("{\n");
         boolean ifOpen = false;
+        int linesParsed = 0;
         for (int i = lineStart; i < lines.size(); i++) {
             int currDepth = scopes.size() - 1; //-1 because scope includes the global scope of argos
             Line lineObj = lines.get(i);
             if (countIndents(lineObj.judo) < currDepth) {
                 break;
             }
+            linesParsed++;
             Line trimmed = lineObj.trimmedCopy();
             StringBuilder line = lineObj.judo;
             int ln = lineObj.lineNum;
@@ -213,27 +220,30 @@ public class Parser {
                 wasConditional = true;
                 handleIf(trimmed, java, scopes);
                 ifOpen = true;
+                i += parseBlock(i + 1, scopes, java);
             } else if (ELF_STMT.matcher(line).matches()) {
                 wasConditional = true;
                 if (!ifOpen) {
                     throw new InvalidStatementError("No if is currently open", ln);
                 }
                 handleElf(trimmed, java, scopes);
+                i += parseBlock(i + 1, scopes, java);
             } else if (ELSE_STMT.matcher(line).matches()) {
                 wasConditional = true;
                 if (!ifOpen) {
                     throw new InvalidStatementError("No if is currently open", ln);
                 }
                 handleElse(trimmed, java, scopes);
+                i += parseBlock(i + 1, scopes, java);
             } else if (FORRANGE_STMT.matcher(line).matches()) {
                 handleForRange(trimmed, java, scopes);
-                parseBlock(i + 1, scopes, java);
+                i += parseBlock(i + 1, scopes, java);
             } else if (FOREACH_STMT.matcher(line).matches()) {
                 handleForEach(trimmed, java, scopes);
-                parseBlock(i + 1, scopes, java);
+                i += parseBlock(i + 1, scopes, java);
             } else if (LOOP_STMT.matcher(line).matches()) {
                 handleLoop(trimmed, java, scopes);
-                parseBlock(i + 1, scopes, java);
+                i += parseBlock(i + 1, scopes, java);
             } else if (PRINT_STMT.matcher(line).matches()) {
                 handlePrint(trimmed, java, scopes);
             } else if (!PASS_STMT.matcher(line).matches()) {
@@ -245,6 +255,7 @@ public class Parser {
         }
         scopes.pop();
         java.append("}\n");
+        return linesParsed;
     }
 
     public Matcher armMatcher(Pattern toUse, CharSequence toMatch) {
@@ -267,18 +278,17 @@ public class Parser {
             );
         }
         String javaType = "I WILL CAUSE AN ERROR";
-        if (MATH_GRAMMAR.isValid(value)) {
+        if (MATH_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.INT));
             javaType = "int";
-        } else if (BOOL_GRAMMAR.isValid(value)) {
+        } else if (BOOL_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.BOOL));
             javaType = "boolean ";
-        } else if (STRING_GRAMMAR.isValid(value)) {
+        } else if (STRING_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.STRING));
             javaType = "String";
-        } else if (RAY_GRAMMAR.isValid(value)) {
-            Type t = categorizeRay(value, scopes, line);
-            //noinspection ConstantConditions
+        } else if (RAY_GRAMMAR.validateNoThrow(value)) {
+            Type t = RAY_GRAMMAR.categorize(value);
             javaType = t.javaType;
             curScope.put(varName, new Variable(varName, t));
             value = value.replaceAll("\\[", "{").replaceAll("]", "}");
@@ -288,54 +298,63 @@ public class Parser {
         java.append(javaType).append(" ").append(varName).append(" = ").append(value).append(";\n");
     }
 
-    private Type categorizeRay(String ray, ScopeStack scopes, Line line) {
-        Type overall = null;
-        Matcher rayMatch = armMatcher(RAY_EXTRACT, ray);
-        String[] list = rayMatch.group("ray").split(",");
-        for (String el : list) {
-            Type curr;
-            if (VAR_GRAMMAR.isValid(el)) {
-                curr = scopes.find(el).type;
-            } else if (MATH_GRAMMAR.isValid(el)) {
-                curr = Type.INT;
-            } else if (STRING_GRAMMAR.isValid(el)) {
-                curr = Type.STRING;
-            } else if (BOOL_GRAMMAR.isValid(el)) {
-                curr = Type.BOOL;
-            } else {
-                throw new InvalidStatementError("Bad statement in ray literal");
-            }
-            if (overall == null) {
-                overall = curr;
-            } else if (curr != overall) {
-                throw new TypeError("Inconsistent types in ray literal", line.lineNum);
-            }
-        }
-        if (overall != null) {
-            switch (overall) {
-                case INT -> {
-                    return Type.INT_LIST;
-                }
-                case STRING -> {
-                    return Type.STRING_LIST;
-                }
-                case BOOL -> {
-                    return Type.BOOL_LIST;
-                }
-            }
-        }
-        return null;
-    }
-
     //TODO: need a translation function for converting keywords to Java equivalents
 
-    public void handleReassignment(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handleReassignment(Line line, StringBuilder java, ScopeStack scopes) {
+        Matcher m = armMatcher(REASSIGN_STMT, line.judo);
+        String varName = m.group("var");
+        String value = m.group("rValue");
+        Variable var = scopes.find(varName);
+        boolean passed;
+        String arrayReinit = "";
+        switch (var.type) {
+            case INT -> {
+                passed = MATH_GRAMMAR.validateNoThrow(value);
+            }
+            case BOOL -> {
+                passed = BOOL_GRAMMAR.validateNoThrow(value);
+            }
+            case STRING -> {
+                passed = STRING_GRAMMAR.validateNoThrow(value);
+            }
+            default -> { //one of the list types
+                passed = RAY_GRAMMAR.categorize(value) == var.type;
+                arrayReinit = format("new {0}[]", var.type.listOf.javaType);
+                value = value.replaceFirst("\\[", "{").replace(']', '}');
+            }
+        }
+        if (!passed) {
+            throw new TypeError(
+                format(
+                    "Variable `{0}` was previously assigned type {1}",
+                    varName,
+                    var.type.javaType
+                ), line.lineNum
+            );
+        }
+        java.append(varName).append(" = ").append(arrayReinit).append(value).append(";\n");
+    }
 
-    public void handleIf(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handleIf(Line line, StringBuilder java, ScopeStack scopes) {
+        Matcher m = armMatcher(IF_STMT, line.judo);
+        String condition = m.group("condition");
+        BOOL_GRAMMAR.validate(condition);
+        scopes.pushNewScope();
+        java.append("if (").append(condition).append(") ");
+    }
 
-    public void handleElf(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handleElf(Line line, StringBuilder java, ScopeStack scopes) {
+        Matcher m = armMatcher(ELF_STMT, line.judo);
+        String condition = m.group("condition");
+        BOOL_GRAMMAR.validate(condition);
+        scopes.pushNewScope();
+        java.append("else if (").append(condition).append(") ");
+    }
 
-    public void handleElse(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handleElse(Line line, StringBuilder java, ScopeStack scopes) {
+        scopes.pushNewScope();
+        java.append("else ");
+    }
 
     // Handling: Judo: for loopVar in lo:hi[step]
     //           Java: for(type loopVar = lo; lo<=hi; loopVar+=step)
@@ -348,15 +367,15 @@ public class Parser {
         int lo;
         try {
             lo = Integer.parseInt(m.group("lo"));
-        } catch (ClassCastException c) {
-            throw new InvalidStatementError("Bad low value in range in for-loop.");
+        } catch (NumberFormatException e) {
+            throw new InvalidStatementError("Bad low value in range in for-loop");
         }
 
         int hi;
         try {
             hi = Integer.parseInt(m.group("hi"));
-        } catch (ClassCastException c) {
-            throw new InvalidStatementError("Bad high value in range in for-loop.");
+        } catch (NumberFormatException e) {
+            throw new InvalidStatementError("Bad high value in range in for-loop");
         }
 
         String stepString = m.group("step");
@@ -364,12 +383,12 @@ public class Parser {
         if (stepString != null) {
             try {
                 step = Integer.parseInt(m.group("step"));
-            } catch (ClassCastException c) {
-                throw new InvalidStatementError("Bad step value in for-loop.");
+            } catch (NumberFormatException e) {
+                throw new InvalidStatementError("Bad step value in for-loop");
             }
         }
 
-        //for(int loopVar = lo; lo <= hi; loopVar+=step;){
+        //for(int loopVar = lo; lo < hi; loopVar+=step;){
         java
             .append("for(int ")
             .append(loopVar)
@@ -377,13 +396,13 @@ public class Parser {
             .append(lo)
             .append("; ")
             .append(lo)
-            .append("<=")
+            .append(" < ")
             .append(hi)
             .append("; ")
             .append(loopVar)
             .append(" += ")
             .append(step)
-            .append(";)");
+            .append(")");
     }
 
     //Handling: Judo: for(loopVar : iterable)
@@ -405,9 +424,19 @@ public class Parser {
             .append(")");
     }
 
-    public void handleLoop(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handleLoop(Line line, StringBuilder java, ScopeStack scopes) {
+        scopes.pushNewScope();
+        Matcher m = armMatcher(LOOP_STMT, line.judo);
+        String condition = m.group("condition");
+        BOOL_GRAMMAR.validate(condition); //throws on its own
+        java.append("while(").append(condition).append(") ");
+    }
 
-    public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {}
+    public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {
+        Matcher m = armMatcher(PRINT_STMT, line.judo);
+        String arg = m.group("argument");
+        java.append("System.out.println(").append(arg).append(");\n");
+    }
 
     private static class Line {
 
@@ -431,17 +460,6 @@ public class Parser {
 
         public String toString() {
             return format("{0}|{1}", lineNum, judo);
-        }
-    }
-
-    public static class Variable {
-
-        public final String identifier;
-        public final Type type;
-
-        public Variable(String identifier, Type type) {
-            this.identifier = identifier;
-            this.type = type;
         }
     }
 }

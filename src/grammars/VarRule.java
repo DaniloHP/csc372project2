@@ -4,9 +4,9 @@ import static java.text.MessageFormat.format;
 
 import java.util.*;
 import java.util.regex.Matcher;
-import parser.Parser;
 import parser.ScopeStack;
 import parser.Type;
+import parser.Variable;
 import parser.errors.TypeError;
 import parser.errors.VariableError;
 
@@ -16,11 +16,11 @@ public class VarRule extends Rule {
         List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
     );
     public static final Set<String> VALUE_KEYWORDS = new HashSet<>(List.of("T", "F"));
-    private static final Map<String, Parser.Variable> BUILTINS_AS_VARIABLES = new HashMap<>() {
+    private static final Map<String, Variable> BUILTINS_AS_VARIABLES = new HashMap<>() {
         {
-            put("T", new Parser.Variable("T", Type.BOOL));
-            put("F", new Parser.Variable("F", Type.BOOL));
-            put("argos", new Parser.Variable("argos", Type.INT_LIST));
+            put("T", new Variable("T", Type.BOOL));
+            put("F", new Variable("F", Type.BOOL));
+            put("argos", new Variable("argos", Type.INT_LIST));
         }
     };
 
@@ -78,7 +78,7 @@ public class VarRule extends Rule {
             if (scopes != null) {
                 //exists
                 //
-                Parser.Variable var = BUILTINS_AS_VARIABLES.get(varName);
+                Variable var = BUILTINS_AS_VARIABLES.get(varName);
                 var = var == null ? scopes.find(varName, true) : var;
                 //is of the expected type
                 if (doTypeCheck && var.type != expected) {

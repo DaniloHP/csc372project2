@@ -4,6 +4,7 @@ import static java.text.MessageFormat.format;
 
 import java.util.ArrayList;
 import java.util.List;
+import parser.errors.TypeError;
 
 public abstract class Grammar {
 
@@ -20,10 +21,23 @@ public abstract class Grammar {
         levels = new ArrayList<>();
     }
 
-    public boolean isValid(CharSequence toCheck) {
+    public boolean validate(CharSequence toCheck) {
         for (Rule r : levels.get(0)) {
             if (r.validate(toCheck)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean validateNoThrow(CharSequence toCheck) {
+        for (Rule r : levels.get(0)) {
+            try {
+                if (r.validate(toCheck)) {
+                    return true;
+                }
+            } catch (TypeError e) {
+                continue;
             }
         }
         return false;

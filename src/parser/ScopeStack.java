@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 import parser.errors.VariableError;
 
-public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
+public class ScopeStack extends Stack<Map<String, Variable>> {
 
     boolean testing;
 
@@ -20,7 +20,7 @@ public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
         this.testing = testing;
     }
 
-    public void addToCurrScope(CharSequence varName, Parser.Variable var) {
+    public void addToCurrScope(CharSequence varName, Variable var) {
         var currScope = this.peek();
         if (currScope.containsKey(varName.toString())) {
             throw new VariableError(
@@ -30,8 +30,8 @@ public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
         currScope.put(varName.toString(), var);
     }
 
-    public void addToCurrScope(Parser.Variable... vars) {
-        for (Parser.Variable v : vars) {
+    public void addToCurrScope(Variable... vars) {
+        for (Variable v : vars) {
             this.addToCurrScope(v.identifier, v);
         }
     }
@@ -40,7 +40,7 @@ public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
         this.push(new HashMap<>());
     }
 
-    public Parser.Variable find(String varName, boolean doThrow) {
+    public Variable find(String varName, boolean doThrow) {
         //I can take advantage of the silliness of Java's built-in stack to just
         //iterate through it, top down.
         for (int i = this.size() - 1; i >= 0; i--) {
@@ -52,12 +52,12 @@ public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
         if (doThrow && !this.testing) {
             throw new VariableError(format("Variable `{0}` not found", varName));
         } else if (testing) {
-            return new Parser.Variable("~testing~", Type.INT_LIST);
+            return new Variable("~testing~", Type.INT_LIST);
         }
         return null;
     }
 
-    public Parser.Variable find(String varName) {
+    public Variable find(String varName) {
         return this.find(varName, true);
     }
 }

@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
@@ -52,7 +55,23 @@ public class ParserTests {
         runGeneratedJava(code, className);
     }
 
+    @Test
+    void testIfs() {
+        final Parser p = new Parser("judo-files/ifs.judo");
+        String className = "TestIfs";
+        String code = p.parseTesting(className);
+        runGeneratedJava(code, className);
+    }
+
     public void runGeneratedJava(String code, String className) {
+        Path dir = Paths.get(OUT_DIR);
+        if (!Files.exists(dir)) {
+            try {
+                Files.createDirectory(dir);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         System.out.printf("Running test for class %s\n", className);
         String classFileName = OUT_DIR + className;
         String fileName = classFileName + ".java";
@@ -65,9 +84,10 @@ public class ParserTests {
         try {
             Runtime
                 .getRuntime()
-                .exec(String.format("sh -c javac %s && java %s", fileName, classFileName))
+                .exec(String.format("javac %s && java %s", fileName, classFileName))
                 .waitFor();
         } catch (IOException | InterruptedException e) {
+            //TODO: this always tells you it didn't crash even when it did.
             Assertions.fail(String.format("Class %s crashed when running: %s\n", className, e));
             return;
         }

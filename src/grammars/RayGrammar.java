@@ -35,8 +35,13 @@ public class RayGrammar extends Grammar {
     }
 
     @Override
-    public boolean isValid(CharSequence toCheck) {
+    public boolean validate(CharSequence toCheck) {
         return this.categorize(toCheck) != null;
+    }
+
+    @Override
+    public boolean validateNoThrow(CharSequence toCheck) {
+        return this.validate(toCheck); //already is no-throw
     }
 
     public Type categorize(CharSequence toCheck) {
@@ -47,7 +52,7 @@ public class RayGrammar extends Grammar {
             String unwrapped = m.group("ray");
             try {
                 if (this.intRayRule.validate(unwrapped)) {
-                    found = Type.INT;
+                    found = Type.INT_LIST;
                 }
             } catch (TypeError e) {}
             try {
@@ -55,7 +60,7 @@ public class RayGrammar extends Grammar {
                     if (found != null) {
                         throw new TypeError(format("Is this possible?"));
                     }
-                    found = Type.BOOL;
+                    found = Type.BOOL_LIST;
                 }
             } catch (TypeError e) {}
             try {
@@ -63,7 +68,7 @@ public class RayGrammar extends Grammar {
                     if (found != null) {
                         throw new TypeError(format("Is this possible?"));
                     }
-                    found = Type.STRING;
+                    found = Type.STRING_LIST;
                 }
             } catch (TypeError e) {}
         }

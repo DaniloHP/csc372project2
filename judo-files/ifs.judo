@@ -1,0 +1,8 @@
+let num = 10
+let bool = T
+if num == 10:
+    hallpass
+elf bool and num < 10:
+    hallpass
+else:
+    hallpass
