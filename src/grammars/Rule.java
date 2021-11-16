@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Rule implements Cloneable {
+public class Rule {
 
     protected Pattern regex;
     protected Map<String, List<Rule>> children;
-    private String id; //for debugging
+    protected String id; //for debugging
 
     public Rule(CharSequence regexStr) {
         children = new HashMap<>();

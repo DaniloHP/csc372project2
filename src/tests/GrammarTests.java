@@ -4,13 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import grammars.BoolGrammar;
-import grammars.Grammar;
-import grammars.MathGrammar;
-import grammars.RayGrammar;
-import grammars.StringGrammar;
-import grammars.VarGrammar;
-import grammars.VarRule;
+import grammars.*;
+
 import java.util.HashMap;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -22,6 +17,9 @@ import parser.Type;
 import parser.errors.TypeError;
 import parser.errors.VariableError;
 
+/**
+ * Tests are run sequentially in the order they appear (top to bottom)
+ */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GrammarTests {
 
@@ -34,6 +32,7 @@ public class GrammarTests {
     @Order(1)
     @Test
     void testMathGrammar() {
+        VarRule.checkVarTypes = true;
         assertTrue(mathGrammar.isValid("x"));
         assertTrue(mathGrammar.isValid("-1"));
         assertTrue(mathGrammar.isValid("(1)"));
@@ -169,9 +168,11 @@ public class GrammarTests {
     @Order(6)
     @Test
     void testStrictTypeChecking() {
-        VarRule rule = new VarRule(Grammar.VAR_RULE, "");
+        VarRule.checkVarTypes = false;
         ScopeStack scopes = new ScopeStack();
         VarRule.useScopes(scopes);
+
+        VarRule rule = new VarRule(Grammar.VAR_RULE);
         rule.useType(Type.INT);
         scopes.add(new HashMap<>());
         Parser.Variable i = new Parser.Variable("i", Type.INT);
@@ -181,8 +182,30 @@ public class GrammarTests {
 
         rule.useType(Type.STRING);
         assertThrows(TypeError.class, () -> rule.validate("i")); //i is an int
+        assertThrows(VariableError.class, () -> rule.validate(" str "));
         Parser.Variable str = new Parser.Variable("str", Type.STRING);
+        scopes.addToCurrScope(str);
         assertTrue(rule.validate(" str "));
+
+        VarGrammar vg = new VarGrammar();
+        MathGrammar mg = new MathGrammar(vg);
+
+        assertTrue(mg.isValid("i"));
+        assertTrue(mg.isValid("i + i"));
+        assertThrows(VariableError.class, () -> mg.isValid("i + j"));
+        assertThrows(TypeError.class, () -> mg.isValid("i + str"));
+
+        BoolGrammar bg = new BoolGrammar(mg, vg);
+        Parser.Variable bool1 = new Parser.Variable("bool1", Type.BOOL);
+        Parser.Variable bool2 = new Parser.Variable("bool2", Type.BOOL);
+        Parser.Variable bool3 = new Parser.Variable("bool3", Type.BOOL);
+        scopes.addToCurrScope(bool1, bool2, bool3);
+        assertThrows(VariableError.class, () -> bg.isValid("bool and bool2 and bool3"));
+        assertTrue(bg.isValid("bool1 and bool2 and bool3"));
+        assertTrue(bg.isValid("bool1 and bool2 and 1 < 2"));
+        assertTrue(bg.isValid("bool1 and bool2 and i < 2"));
+        assertThrows(TypeError.class, () -> bg.isValid("bool1 and bool2 < 2"));
+
         VarRule.useScopes(null);
     }
 }

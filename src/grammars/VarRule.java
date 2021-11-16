@@ -17,6 +17,7 @@ public class VarRule extends Rule {
     public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
         List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F")
     );
+    public static boolean checkVarTypes = false;
     private static ScopeStack scopes;
 
     private Type type;
@@ -27,6 +28,10 @@ public class VarRule extends Rule {
 
     public VarRule(Rule other, String newId) {
         super(other, newId);
+    }
+
+    public VarRule(Rule other) {
+        this(other, null);
     }
 
     public void useType(Type type) {
@@ -40,7 +45,7 @@ public class VarRule extends Rule {
     @Override
     public boolean validate(CharSequence toCheck) {
         //this.type may be null, and that's fine.
-        return this.validate(toCheck, this.type, false, false);
+        return this.validate(toCheck, this.type, false, !checkVarTypes);
     }
 
     public boolean validate(
@@ -73,5 +78,10 @@ public class VarRule extends Rule {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return format("VarRule {0} ({1})", id, type == null ? "untyped" : type.javaType);
     }
 }

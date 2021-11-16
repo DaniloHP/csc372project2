@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Grammar {
-
     protected final List<List<Rule>> levels;
     //Rules that show up in a lot of grammars. Paren rule could also be here
     protected static final Rule BASE_DOWN_RULE = new Rule("(?<inner>.*)", "DOWN_RULE");

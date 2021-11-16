@@ -44,7 +44,8 @@ public class MathGrammar extends Grammar {
         // <root>
         Rule parenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(?<inner>.*)", "UNARY_NEGATIVE");
-        Rule mathVarRule = new VarRule(VAR_RULE, "MATH_VAR");
+        VarRule mathVarRule = new VarRule(VAR_RULE, "MATH_VAR");
+        mathVarRule.useType(Type.INT);
         List<Rule> rootExpr = new ArrayList<>(List.of(mathVarRule, INT_RULE, parenRule, negRule));
 
         //// Populate the levels, bottom up

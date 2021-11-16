@@ -30,8 +30,10 @@ public class ScopeStack extends Stack<Map<String, Parser.Variable>> {
         currScope.put(varName.toString(), var);
     }
 
-    public void addToCurrScope(Parser.Variable var) {
-        this.addToCurrScope(var.identifier, var);
+    public void addToCurrScope(Parser.Variable... vars) {
+        for (Parser.Variable v : vars) {
+            this.addToCurrScope(v.identifier, v);
+        }
     }
 
     public void pushNewScope() {
