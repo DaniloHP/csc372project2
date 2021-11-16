@@ -6,7 +6,12 @@ import parser.Type;
 public class VarGrammar extends Grammar {
 
     public VarGrammar() {
-        Rule varRule = new VarRule(VAR_RULE, "VAR");
+        this(null);
+    }
+
+    public VarGrammar(Type expectedType) {
+        VarRule varRule = new VarRule(VAR_RULE, "VAR");
+        varRule.useType(expectedType);
         List<Rule> varStmt = List.of(varRule);
         this.levels.add(varStmt);
     }

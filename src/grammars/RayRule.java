@@ -1,9 +1,9 @@
 package grammars;
 
-import static java.util.AbstractMap.SimpleEntry;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 public class RayRule extends Rule {
@@ -32,26 +32,28 @@ public class RayRule extends Rule {
         Matcher matcher = regex.matcher(toCheck);
         if (!toCheck.isEmpty() && matcher.matches()) {
             boolean[] resultVector;
-            List<SimpleEntry<String, String>> groups = new ArrayList<>();
+            Map<String, String> groups = new HashMap<>();
             String lastGroup = groupOrNull(matcher, "last");
             String currGroup = groupOrNull(matcher, "curr");
             String restGroup = groupOrNull(matcher, "rest");
             if (lastGroup == null && currGroup != null && restGroup != null) {
                 resultVector = new boolean[2];
-                groups.add(new SimpleEntry<>("curr", currGroup));
-                groups.add(new SimpleEntry<>("rest", restGroup));
+                groups.put("curr", currGroup); //the current item
+                groups.put("rest", restGroup); //the rest of the list, which will
+                //be validated recursively.
             } else if (lastGroup != null && currGroup == null && restGroup == null) {
+                //means we're down to validating the last item in the list.
                 resultVector = new boolean[1]; //a little ridiculous I know
-                groups.add(new SimpleEntry<>("last", lastGroup));
+                groups.put("last", lastGroup);
             } else {
                 throw new IllegalStateException(
                     "This shouldn't be possible, check the ray grammar!"
                 );
             }
             int i = 0;
-            for (var kv : groups) {
-                String group = kv.getValue();
-                for (Rule rule : children.get(kv.getKey())) {
+            for (var val : groups.keySet()) {
+                String group = groups.get(val);
+                for (Rule rule : children.get(val)) {
                     if (rule.validate(group)) {
                         resultVector[i] = true;
                     }
@@ -63,5 +65,10 @@ public class RayRule extends Rule {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("RayRule %s", id);
     }
 }

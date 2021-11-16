@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import grammars.*;
-
 import java.util.HashMap;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import parser.Parser;
 import parser.ScopeStack;
 import parser.Type;
+import parser.errors.InvalidStatementError;
 import parser.errors.TypeError;
 import parser.errors.VariableError;
 
@@ -108,13 +108,15 @@ public class GrammarTests {
         );
         assertTrue(rayGrammar.isValid("[(8 - 1 + 3) * 6 - ((3 +y) * 2), 1, 2, x]"));
 
-        assertFalse(rayGrammar.isValid("[]"));
-        assertFalse(rayGrammar.isValid("[\"]"));
-        assertFalse(
-            rayGrammar.isValid("[(x and (z == 10)) and (y != 100 or l or 5 < x) or (T), 1, 2]")
+        assertThrows(InvalidStatementError.class, () -> rayGrammar.isValid("[]"));
+        assertThrows(InvalidStatementError.class, () -> rayGrammar.isValid("[\"]"));
+        assertThrows(
+            InvalidStatementError.class,
+            () ->
+                rayGrammar.isValid("[(x and (z == 10)) and (y != 100 or l or 5 < x) or (T), 1, 2]")
         );
-        assertFalse(rayGrammar.isValid("[1,2,]"));
-        assertFalse(rayGrammar.isValid("[1,2, \"three\"]"));
+        assertThrows(InvalidStatementError.class, () -> rayGrammar.isValid("[1,2,]"));
+        assertThrows(InvalidStatementError.class, () -> rayGrammar.isValid("[1,2, \"three\"]"));
     }
 
     @Order(4)
@@ -155,7 +157,7 @@ public class GrammarTests {
         //^ Variable longer than 32 chars
         assertFalse(rule.validate("0__bad_var_11_xx_1"));
         assertFalse(rule.validate("0__bad_var_11_xx_1"));
-        for (String keyword : VarRule.RESERVED_KEYWORDS) {
+        for (String keyword : VarRule.NONVALUE_KEYWORDS) {
             assertThrows(VariableError.class, () -> rule.validate(keyword, null, true, false));
             assertFalse(rule.validate("T == 1 + " + keyword, null, true, false));
         }
@@ -205,7 +207,17 @@ public class GrammarTests {
         assertTrue(bg.isValid("bool1 and bool2 and 1 < 2"));
         assertTrue(bg.isValid("bool1 and bool2 and i < 2"));
         assertThrows(TypeError.class, () -> bg.isValid("bool1 and bool2 < 2"));
-
+        RayGrammar rg = new RayGrammar(bg, mg, new StringGrammar(varGrammar));
+        assertThrows(InvalidStatementError.class, () -> rg.isValid("[T,T,T,1]"));
+        assertTrue(rg.isValid("[bool1, bool2, bool3]"));
+        assertTrue(rg.isValid("[bool1, bool1, bool1]"));
+        assertTrue(rg.isValid("[bool1, bool2, T]"));
+        assertTrue(rg.isValid("[\"\", \"hi\"]"));
+        assertTrue(rg.isValid("[\"\", \"hi\", str]"));
+        assertThrows(InvalidStatementError.class, () -> rg.isValid("[bool1, bool2, bool3, 1]"));
+        assertThrows(InvalidStatementError.class, () -> rg.isValid("[bool1, bool2, bool3, i]"));
+        assertThrows(InvalidStatementError.class, () -> rg.isValid("[bool1, bool2, str, i]"));
+        assertThrows(InvalidStatementError.class, () -> rg.isValid("[bool1, bool2, str, i]"));
         VarRule.useScopes(null);
     }
 }

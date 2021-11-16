@@ -2,9 +2,7 @@ package grammars;
 
 import static java.text.MessageFormat.format;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import parser.Parser;
 import parser.ScopeStack;
@@ -14,9 +12,21 @@ import parser.errors.VariableError;
 
 public class VarRule extends Rule {
 
+    public static final Set<String> NONVALUE_KEYWORDS = new HashSet<>(
+        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
+    );
+    public static final Set<String> VALUE_KEYWORDS = new HashSet<>(List.of("T", "F"));
+    private static final Map<String, Parser.Variable> BUILTINS_AS_VARIABLES = new HashMap<>() {
+        {
+            put("T", new Parser.Variable("T", Type.BOOL));
+            put("F", new Parser.Variable("F", Type.BOOL));
+            put("argos", new Parser.Variable("argos", Type.INT_LIST));
+        }
+    };
+
     public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
         List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F")
-    );
+    ); // = NONVALUE_KEYWORDS U VALUE_KEYWORDS
     public static boolean checkVarTypes = false;
     private static ScopeStack scopes;
 
@@ -57,19 +67,26 @@ public class VarRule extends Rule {
         Matcher m = this.regex.matcher(toCheck);
         if (!toCheck.isEmpty() && m.matches()) {
             String varName = m.group("var");
-            if (doKWCheck && VarRule.RESERVED_KEYWORDS.contains(varName)) {
+            //In this block I check if it's a keyword?
+            if (doKWCheck && VarRule.NONVALUE_KEYWORDS.contains(varName)) {
+                //           ^This is to avoid treating T/F as a variable and
+                //getting exceptions because "variable T uses a reserved..."
                 throw new VariableError(
                     format("Variable `{0}` uses a reserved keyword for its name", varName)
                 );
             }
             if (scopes != null) {
-                Parser.Variable var = scopes.find(varName, true);
+                //exists
+                //
+                Parser.Variable var = BUILTINS_AS_VARIABLES.get(varName);
+                var = var == null ? scopes.find(varName, true) : var;
+                //is of the expected type
                 if (doTypeCheck && var.type != expected) {
                     throw new TypeError(
                         format(
                             "Variable `{0}` was expected to be of type {1}",
                             varName,
-                            var.type.javaType
+                            expected.javaType
                         )
                     );
                 }

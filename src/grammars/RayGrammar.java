@@ -1,38 +1,78 @@
 package grammars;
 
+import static java.text.MessageFormat.format;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import parser.Type;
+import parser.errors.InvalidStatementError;
+import parser.errors.TypeError;
 
 public class RayGrammar extends Grammar {
+
+    private Pattern rayUnwrap;
+    private RayRule intRayRule, boolRayRule, strRayRule;
 
     public RayGrammar(BoolGrammar bg, MathGrammar mg, StringGrammar sg) {
         super();
         //<rays>, <int_list>, <string_list>
-        Rule rayRule = new Rule("\\[ *(?<ray>.+?) *\\]", "RAY_RULE");
-        List<Rule> rayExpr = new ArrayList<>(List.of(rayRule));
-        Rule intRayRule = new RayRule(
-            "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)",
-            "INT_LIST"
-        );
+        this.rayUnwrap = Pattern.compile("\\[ *(?<ray>.+?) *\\]");
+        String rayRe = "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)";
+        this.intRayRule = new RayRule(rayRe, "INT_LIST");
         List<Rule> intRayExpr = new ArrayList<>(List.of(intRayRule));
 
-        Rule boolRayRule = new RayRule(
-            "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)",
-            "BOOL_LIST"
-        );
+        this.boolRayRule = new RayRule(rayRe, "BOOL_LIST");
         List<Rule> boolRayExpr = new ArrayList<>(List.of(boolRayRule));
 
-        Rule strRayRule = new RayRule(
-            "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)",
-            "STRING_LIST"
-        );
+        this.strRayRule = new RayRule(rayRe, "STRING_LIST");
         List<Rule> strRayExpr = new ArrayList<>(List.of(strRayRule));
 
-        rayRule.addChildren("ray", List.of(intRayRule, boolRayRule, strRayRule));
         populateRayRules(mg.exposeEntrypoint(), intRayExpr, intRayRule);
         populateRayRules(bg.exposeEntrypoint(), boolRayExpr, boolRayRule);
         populateRayRules(sg.exposeEntrypoint(), strRayExpr, strRayRule);
-        this.levels.addAll(List.of(rayExpr, boolRayExpr, intRayExpr, strRayExpr));
+    }
+
+    @Override
+    public boolean isValid(CharSequence toCheck) {
+        return this.categorize(toCheck) != null;
+    }
+
+    public Type categorize(CharSequence toCheck) {
+        Type found = null;
+        Matcher m = rayUnwrap.matcher(toCheck);
+        int numTypeErrors = 0;
+        if (m.matches()) {
+            String unwrapped = m.group("ray");
+            try {
+                if (this.intRayRule.validate(unwrapped)) {
+                    found = Type.INT;
+                }
+            } catch (TypeError e) {}
+            try {
+                if (this.boolRayRule.validate(unwrapped)) {
+                    if (found != null) {
+                        throw new TypeError(format("Is this possible?"));
+                    }
+                    found = Type.BOOL;
+                }
+            } catch (TypeError e) {}
+            try {
+                if (this.strRayRule.validate(unwrapped)) {
+                    if (found != null) {
+                        throw new TypeError(format("Is this possible?"));
+                    }
+                    found = Type.STRING;
+                }
+            } catch (TypeError e) {}
+        }
+        if (found == null) {
+            throw new InvalidStatementError(
+                format("Invalid syntax or mixed types in ray declaration: {0}", toCheck)
+            );
+        }
+        return found;
     }
 
     private void populateRayRules(List<Rule> curr, List<Rule> rest, Rule... rules) {
