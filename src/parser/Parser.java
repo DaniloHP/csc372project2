@@ -194,12 +194,12 @@ public class Parser {
             .append("public class ")
             .append(className)
             .append(" {\npublic static void main(String[] argos) ");
-        parseBlock(0, scopes, java);
+        parseBlock(0, scopes, java, this.whitespace);
         java.append("}"); //closes class {
         return java.toString();
     }
 
-    public int parseBlock(int lineStart, ScopeStack scopes, StringBuilder java) {
+    public int parseBlock(int lineStart, ScopeStack scopes, StringBuilder java, String currWhitespace) {
         java.append("{\n");
         boolean ifOpen = false;
         int linesParsed = 0;
@@ -214,6 +214,7 @@ public class Parser {
             StringBuilder line = lineObj.judo;
             int ln = lineObj.lineNum;
             boolean wasConditional = false;
+            java.append(currWhitespace);
             if (ASSIGN_STMT.matcher(line).matches()) {
                 handleAssignment(trimmed, java, scopes);
             } else if (REASSIGN_STMT.matcher(line).matches()) {
@@ -222,7 +223,7 @@ public class Parser {
                 wasConditional = true;
                 handleIf(trimmed, java, scopes);
                 ifOpen = true;
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace);
                 i += parsed;
                 linesParsed += parsed;
                 //you'd think all these identical 3 line blocks could be in a
@@ -233,7 +234,7 @@ public class Parser {
                     throw new InvalidStatementError("No if is currently open", ln);
                 }
                 handleElf(trimmed, java, scopes);
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace + this.whitespace);
                 i += parsed;
                 linesParsed += parsed;
             } else if (ELSE_STMT.matcher(line).matches()) {
@@ -242,22 +243,22 @@ public class Parser {
                     throw new InvalidStatementError("No if is currently open", ln);
                 }
                 handleElse(trimmed, java, scopes);
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace + this.whitespace);
                 i += parsed;
                 linesParsed += parsed;
             } else if (FORRANGE_STMT.matcher(line).matches()) {
                 handleForRange(trimmed, java, scopes);
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace + this.whitespace);
                 i += parsed;
                 linesParsed += parsed;
             } else if (FOREACH_STMT.matcher(line).matches()) {
                 handleForEach(trimmed, java, scopes);
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace + this.whitespace);
                 i += parsed;
                 linesParsed += parsed;
             } else if (LOOP_STMT.matcher(line).matches()) {
                 handleLoop(trimmed, java, scopes);
-                int parsed = parseBlock(i + 1, scopes, java);
+                int parsed = parseBlock(i + 1, scopes, java, currWhitespace + this.whitespace);
                 i += parsed;
                 linesParsed += parsed;
             } else if (PRINT_STMT.matcher(line).matches()) {
@@ -270,7 +271,7 @@ public class Parser {
             }
         }
         scopes.pop();
-        java.append("}\n");
+        java.append(currWhitespace).append("}\n");
         return linesParsed;
     }
 
@@ -386,7 +387,7 @@ public class Parser {
                 );
             }
             Type t = ray.type.listOf;
-            validateByScalarType(indexer.group("index"), t);
+            MATH_GRAMMAR.validate(indexer.group("index"));
             //^ this will throw if it isn't valid
             passed = true;
         } else {
