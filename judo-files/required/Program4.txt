@@ -1,0 +1,45 @@
+? Project 2 - Design a language
+? Group Members: Danilo Hidalgo and Christian Trejo
+? File: Program4.txt
+? Purpose: Print a diamond out of asterisks given a width.
+? Arguments: Integer maxstars
+? Parsing Error:
+
+let maxstars = argos[0]                ? Number of stars to print in middle row
+
+if maxstars%2 == 0:                    ? Make number of stars odd
+    maxstars = maxstars + 1
+
+let spaces = (maxstars - 1)/2          ? Spaces on each side
+let middleRow = (maxstars/2) + 1       ? Middle row == ceil(maxstars/2)
+let stars = 1                          ? Current number of stars
+
+for i in 1..middleRow:                 ? Printing top half of the diamond, including middle row
+    for x in 1..spaces:                ? Spaces on left side
+        out("A")
+
+    for x in 1..stars:                 ? Stars
+        out("*")
+    stars = stars + 2
+
+    spaces = spaces - 1
+    out("\n")
+
+outln("HELLO")
+
+let bottomRow = middleRow - 1
+spaces = 1
+stars = maxstars - 2
+
+for i in 1..bottomRow:                 ? Printing bottom half of the diamond
+    for x in 1..spaces:                ? Spaces on left side
+        out(" ")
+
+    for x in 1..stars:                 ? Stars
+        out("*")
+    stars = stars - 2
+
+    for x in 1..spaces:                ? Spaces on right side
+        out(" ")
+    spaces = spaces + 1
+    out("\n")

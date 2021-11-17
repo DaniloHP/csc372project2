@@ -76,7 +76,7 @@ public class ParserTests {
     @Test
     void testGeneral() {
         final Parser p = new Parser("judo-files/valid/general.judo");
-        String className = "TestRays";
+        String className = "TestGeneral";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
@@ -94,6 +94,47 @@ public class ParserTests {
         String className = "TestBadPrint";
         assertThrows(InvalidStatementError.class, () -> p.parseFull(className));
     }
+
+    @Test
+    void testProgram1() {
+        final Parser p = new Parser("judo-files/required/Program1.txt");
+        String className = "TestProgram1";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
+    void testProgram2() {
+        final Parser p = new Parser("judo-files/required/Program2.txt");
+        String className = "TestProgram2";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
+    void testProgram3() {
+        final Parser p = new Parser("judo-files/required/Program3.txt");
+        String className = "TestProgram3";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
+    void testProgram4() {
+        final Parser p = new Parser("judo-files/required/Program4.txt");
+        String className = "TestProgram4";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
+    void testProgram5() {
+        final Parser p = new Parser("judo-files/required/Program5.txt");
+        String className = "TestProgram5";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
 
     public void runGeneratedJava(String code, String className) {
         Path dir = Paths.get(OUT_DIR);

@@ -35,7 +35,7 @@ Program1.txt: This program should take in two command line arguments that
             numMultiples = numMultiples + 1
         else:
             hallpass
-    }
+
     out(numMultiples)
 
 ---------------------------------------------------------------------------

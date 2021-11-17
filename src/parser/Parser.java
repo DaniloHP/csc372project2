@@ -51,7 +51,7 @@ public class Parser {
     );
     private static final Pattern LOOP_STMT = Pattern.compile("[ \\t]*loop +(?<condition>.*?) *: *");
     private static final Pattern PRINT_STMT = Pattern.compile(
-        "[ \\t]*out\\((?<argument>.*)\\)[ \\t]*"
+        "[ \\t]*out(?<line>ln)?\\((?<argument>.*)\\)[ \\t]*"
     );
     private static final Pattern PASS_STMT = Pattern.compile("[ \\t]*hallpass[ \\t]*");
 
@@ -317,6 +317,8 @@ public class Parser {
                     format("Variable `{0}` isn't an array type and can't be indexed", rayName),
                     line.lineNum
                 );
+            } else if (ray.equals(ARGOS)) {
+                value = format("Integer.parseInt({0})", value);
             }
             Type t = ray.type.listOf;
             javaType = t.javaType;
@@ -360,7 +362,9 @@ public class Parser {
                 .replaceAll(format(re, "T"), " true ")
                 .replaceAll(format(re, "F"), " false ")
                 .replaceAll(format(re, "and"), " && ")
-                .replaceAll(format(re, "or"), " || ");
+                .replaceAll(format(re, "or"), " || ")
+                .replaceAll(format(re, "mod"), " % ")
+                .replaceAll(format(re, "not"), " ! ");
         return res;
     }
 
@@ -450,19 +454,17 @@ public class Parser {
         scopes.pushNewScope();
         scopes.addToCurrScope(loopVar, new Variable(loopVar, Type.INT));
 
-        int lo;
-        try {
-            lo = Integer.parseInt(m.group("lo"));
-        } catch (NumberFormatException e) {
-            throw new InvalidStatementError("Bad low value in range in for-loop");
-        }
+        String lo = m.group("lo");
+        String hi = m.group("hi");
+        MATH_GRAMMAR.validate(lo);
+        MATH_GRAMMAR.validate(hi);
 
-        int hi;
-        try {
-            hi = Integer.parseInt(m.group("hi"));
-        } catch (NumberFormatException e) {
-            throw new InvalidStatementError("Bad high value in range in for-loop");
-        }
+//        int hi;
+//        try {
+//            hi = Integer.parseInt(m.group("hi"));
+//        } catch (NumberFormatException e) {
+//            throw new InvalidStatementError("Bad high value in range in for-loop");
+//        }
 
         String stepString = m.group("step");
         int step = 1;
@@ -521,6 +523,7 @@ public class Parser {
     public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(PRINT_STMT, line.judo);
         String arg = m.group("argument");
+        String ln = m.group("line");
         boolean matchedSomething = arg.isBlank();
         matchedSomething |= VAR_GRAMMAR.validateNoThrow(arg);
         matchedSomething |= MATH_GRAMMAR.validateNoThrow(arg);
@@ -529,7 +532,10 @@ public class Parser {
         if (!matchedSomething) {
             throw new InvalidStatementError("Invalid argument to out: " + arg, line.lineNum);
         }
-        java.append("System.out.println(").append(finalReplacements(arg)).append(");\n");
+        java
+            .append(ln == null ? "System.out.print(" : "System.out.println(")
+            .append(finalReplacements(arg))
+            .append(");\n");
     }
 
     private static class Line {

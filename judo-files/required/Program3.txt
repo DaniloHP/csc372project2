@@ -1,0 +1,24 @@
+? Project 2 - Design a language
+? Group Members: Danilo Hidalgo and Christian Trejo
+? File: Program3.txt
+? Purpose: Print the first n numbers in the Fibonacci sequence
+? Arguments: Integer n
+? Parsing Error:
+
+let x = argos[0]            ? Number of desired Fibonacci number
+let i = 0                   ? Count of nums printed
+let current_num = 0         ? Current Fib number
+let last_num = 0            ? Previous Fib number
+let temp = 0                ? temporary
+
+loop i < x:
+    if i == 0:
+        outln(current_num)
+        last_num = current_num
+        current_num = 1
+    else:
+        outln(current_num)
+        temp = current_num
+        current_num = current_num + last_num
+        last_num = temp
+    i = i + 1
