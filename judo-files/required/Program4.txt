@@ -14,32 +14,30 @@ let spaces = (maxstars - 1)/2          ? Spaces on each side
 let middleRow = (maxstars/2) + 1       ? Middle row == ceil(maxstars/2)
 let stars = 1                          ? Current number of stars
 
-for i in 1..middleRow:                 ? Printing top half of the diamond, including middle row
-    for x in 1..spaces:                ? Spaces on left side
-        out("A")
+? Printing top triangle including middle row
+for i in 0..middleRow:                 ? Printing top half of the diamond, including middle row
+    for x in 0..spaces:                ? Spaces on left side
+        out(" ")
 
-    for x in 1..stars:                 ? Stars
+    for x in 0..stars:                 ? Stars
         out("*")
     stars = stars + 2
 
     spaces = spaces - 1
-    out("\n")
+    outln()
 
-outln("HELLO")
-
+? Printing bottom triangle excluding middle row
 let bottomRow = middleRow - 1
 spaces = 1
 stars = maxstars - 2
 
-for i in 1..bottomRow:                 ? Printing bottom half of the diamond
-    for x in 1..spaces:                ? Spaces on left side
+for i in 0..bottomRow:                 ? Printing bottom half of the diamond
+    for x in 0..spaces:                ? Spaces on left side
         out(" ")
 
-    for x in 1..stars:                 ? Stars
+    for x in 0..stars:                 ? Stars
         out("*")
     stars = stars - 2
 
-    for x in 1..spaces:                ? Spaces on right side
-        out(" ")
     spaces = spaces + 1
-    out("\n")
+    outln()
