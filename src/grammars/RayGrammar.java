@@ -36,15 +36,23 @@ public class RayGrammar extends Grammar {
 
     @Override
     public boolean validate(CharSequence toCheck) {
-        return this.categorize(toCheck) != null;
+        return this.categorize(toCheck, true) != null;
     }
 
     @Override
     public boolean validateNoThrow(CharSequence toCheck) {
-        return this.validate(toCheck); //already is no-throw
+        return this.categorize(toCheck, false) != null;
+    }
+
+    public Type categorizeNoThrow(CharSequence toCheck) {
+        return this.categorize(toCheck, false);
     }
 
     public Type categorize(CharSequence toCheck) {
+        return this.categorize(toCheck, true);
+    }
+
+    private Type categorize(CharSequence toCheck, boolean doThrow) {
         Type found = null;
         Matcher m = rayUnwrap.matcher(toCheck);
         int numTypeErrors = 0;
@@ -72,7 +80,7 @@ public class RayGrammar extends Grammar {
                 }
             } catch (TypeError e) {}
         }
-        if (found == null) {
+        if (found == null && doThrow) {
             throw new InvalidStatementError(
                 format("Invalid syntax or mixed types in ray declaration: {0}", toCheck)
             );

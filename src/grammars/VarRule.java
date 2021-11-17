@@ -77,11 +77,10 @@ public class VarRule extends Rule {
             }
             if (scopes != null) {
                 //exists
-                //
                 Variable var = BUILTINS_AS_VARIABLES.get(varName);
                 var = var == null ? scopes.find(varName, true) : var;
                 //is of the expected type
-                if (doTypeCheck && var.type != expected) {
+                if (doTypeCheck && expected != null && var.type != expected) {
                     throw new TypeError(
                         format(
                             "Variable `{0}` was expected to be of type {1}",

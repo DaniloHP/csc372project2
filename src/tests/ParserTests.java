@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
 import parser.errors.IndentationError;
+import parser.errors.InvalidStatementError;
+import parser.errors.TypeError;
 
 public class ParserTests {
 
@@ -41,7 +43,7 @@ public class ParserTests {
         System.out.println("<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>");
         System.out.println("<! Make sure you're using Java 8 to test !>");
         System.out.println("<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>");
-        final Parser p = new Parser("judo-files/assign.judo");
+        final Parser p = new Parser("judo-files/valid/assign.judo");
         String className = "TestAssignments";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -49,26 +51,48 @@ public class ParserTests {
 
     @Test
     void testLoops() {
-        final Parser p = new Parser("judo-files/loops.judo");
+        final Parser p = new Parser("judo-files/valid/loops.judo");
         String className = "TestLoops";
-        String code = p.parseTesting(className);
+        String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
 
     @Test
     void testIfs() {
-        final Parser p = new Parser("judo-files/ifs.judo");
+        final Parser p = new Parser("judo-files/valid/ifs.judo");
         String className = "TestIfs";
-        String code = p.parseTesting(className);
+        String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
 
     @Test
     void testRays() {
-        final Parser p = new Parser("judo-files/rays.judo");
+        final Parser p = new Parser("judo-files/valid/rays.judo");
         String className = "TestRays";
-        String code = p.parseTesting(className);
+        String code = p.parseFull(className);
         runGeneratedJava(code, className);
+    }
+
+    @Test
+    void testGeneral() {
+        final Parser p = new Parser("judo-files/valid/general.judo");
+        String className = "TestRays";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+    
+    @Test
+    void testTypeErrors() {
+        final Parser p = new Parser("judo-files/invalid/badtypereassign.judo");
+        String className = "Test";
+        assertThrows(TypeError.class, () -> p.parseFull(className));
+    }
+
+    @Test
+    void testStatementErrors() {
+        final Parser p = new Parser("judo-files/invalid/badprint.judo");
+        String className = "TestBadPrint";
+        assertThrows(InvalidStatementError.class, () -> p.parseFull(className));
     }
 
     public void runGeneratedJava(String code, String className) {

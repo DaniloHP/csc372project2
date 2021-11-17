@@ -18,6 +18,7 @@ public class Translator {
         String judoFileName = judoFile.getFileName().toString();
         int index = judoFileName.lastIndexOf('.');
         String javaFileName = index > 0 ? judoFileName.substring(0, index) : judoFileName;
+        javaFileName = javaFileName.replaceAll("-", "_");
         javaFileName += ".java";
         String java = parser.parseFull(javaFileName);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(javaFileName))) {
