@@ -1,7 +1,8 @@
 ? Project 2 - Design a language
 ? Group Members: Danilo Hidalgo and Christian Trejo
 ? File: Program 1
-? Purpose: Calculate and print number of multiples x and y in the range 1 to m.
+? Purpose: Calculate and print number of multiples x
+?          and y in the range 1 to m.
 ? Arguments: Three integers x, y, and m
 
 let x = argos[0]
