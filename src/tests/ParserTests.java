@@ -81,6 +81,7 @@ public class ParserTests {
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
+
     @Test
     void testReplacement() {
         final Parser p = new Parser("judo-files/valid/replacement.judo");
@@ -96,7 +97,7 @@ public class ParserTests {
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
-    
+
     @Test
     void testTypeErrors() {
         final Parser p = new Parser("judo-files/invalid/badtypereassign.judo");
@@ -157,7 +158,6 @@ public class ParserTests {
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
     }
-
 
     public void runGeneratedJava(String code, String className) {
         Path dir = Paths.get(OUT_DIR);

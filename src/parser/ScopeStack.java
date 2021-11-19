@@ -9,7 +9,6 @@ import parser.errors.VariableError;
 
 public class ScopeStack extends Stack<Map<String, Variable>> {
 
-
     public ScopeStack() {
         super();
     }

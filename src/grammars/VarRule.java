@@ -25,7 +25,20 @@ public class VarRule extends Rule {
     };
 
     public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F", "mod")
+        List.of(
+            "let",
+            "if",
+            "elf",
+            "else",
+            "argos",
+            "hallpass",
+            "out",
+            "for",
+            "loop",
+            "T",
+            "F",
+            "mod"
+        )
     ); // = NONVALUE_KEYWORDS U VALUE_KEYWORDS
     public static boolean checkVarTypes = true;
     public static boolean checkAgainstKeywords = true;

@@ -304,7 +304,6 @@ public class Parser {
                 line.lineNum
             );
         }
-        Matcher indexer = INDEXER_ACCESS.matcher(value);
         Type t;
         if (MATH_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.INT));
@@ -319,7 +318,8 @@ public class Parser {
             t = RAY_GRAMMAR.categorizeNoThrow(value);
             curScope.put(varName, new Variable(varName, t));
             value = value.replaceAll("\\[", "{").replaceAll("]", "}");
-        } else if (indexer.matches()) {
+        } else if (INDEXER_ACCESS.matcher(value).matches()) {
+            Matcher indexer = armMatcher(INDEXER_ACCESS, value);
             String rayName = indexer.group("var");
             Variable ray = scopes.find(rayName);
             if (!ray.type.isArray()) {
@@ -366,14 +366,13 @@ public class Parser {
     private String finalReplacements(CharSequence input, Type t) {
         String res = input.toString().trim();
         String re = "( +{0} +)|(^{0} +)|( +{0}$)|(^{0}$)";
-        if (t == Type.INT) {
-            res = res.replaceAll(format(re, "mod"), " % ");
-        } else if (t == Type.BOOL) {
+        if (t == Type.BOOL || t == Type.INT_LIST) {
             res =
                 res
                     .replaceAll(format(re, "T"), " true ")
                     .replaceAll(format(re, "F"), " false ")
                     .replaceAll(format(re, "and"), " && ")
+                    .replaceAll(format(re, "mod"), " % ")
                     .replaceAll(format(re, "or"), " || ")
                     .replaceAll(format(re, "not"), " ! ");
         }
