@@ -12,10 +12,11 @@ let m = argos[2]
 let numMultiples = 0
 
 for i in 1..m[1]:
-    if i%x == 0:
+    if i mod x == 0:
         numMultiples = numMultiples + 1
 
-    if i%y == 0:
+    if i mod y == 0:
         numMultiples = numMultiples + 1
 
 outln(numMultiples)
+
