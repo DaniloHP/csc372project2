@@ -1,14 +1,15 @@
 ? Project 2 - Design a language
 ? Group Members: Danilo Hidalgo and Christian Trejo
 ? File: Program2.txt
-? Purpose: Print out "prime" if x is prime and "not prime" if it is not.
+? Purpose: Print out "prime" if x is prime and
+?          "not prime" if it is not.
 ? Arguments: Integer x
 
 let x = argos[0]
 let i = 2
 let flag = F
 loop i < x:
-    if x%i == 0:
+    if x mod i == 0:
         outln("not prime")
         flag = T
         i = x
@@ -16,3 +17,4 @@ loop i < x:
         i = i + 1
 if not flag:
     outln("prime")
+
