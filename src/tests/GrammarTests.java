@@ -32,7 +32,7 @@ public class GrammarTests {
     @Order(1)
     @Test
     void testMathGrammar() {
-        VarRule.checkVarTypes = true;
+        VarRule.checkVarTypes = false;
         assertTrue(mathGrammar.validate("x"));
         assertTrue(mathGrammar.validate("-1"));
         assertTrue(mathGrammar.validate("(1)"));
@@ -43,7 +43,6 @@ public class GrammarTests {
         assertTrue(mathGrammar.validate("1+-1"));
         assertTrue(mathGrammar.validate("1 - 1"));
         assertTrue(mathGrammar.validate("1 * -1"));
-        assertTrue(mathGrammar.validate("1 ^ 1"));
         assertTrue(mathGrammar.validate("1    / 1"));
         assertTrue(mathGrammar.validate("1/1/x/1"));
         assertTrue(mathGrammar.validate("100 mod 1000"));
@@ -170,7 +169,7 @@ public class GrammarTests {
     @Order(6)
     @Test
     void testStrictTypeChecking() {
-        VarRule.checkVarTypes = false;
+        VarRule.checkVarTypes = true;
         ScopeStack scopes = new ScopeStack();
         VarRule.useScopes(scopes);
 

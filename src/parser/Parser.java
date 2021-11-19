@@ -33,6 +33,9 @@ public class Parser {
     private static final Pattern INDEXER_ACCESS = Pattern.compile(
         " *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *\\[ *(?<index>.*?) *]"
     );
+    private static final Pattern INDEXER_ASSIGN = Pattern.compile(
+        " *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *\\[ *(?<index>.*?) *] *= *(?<value>.+)"
+    );
 
     private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(?<condition>.*?) *: *");
     private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
@@ -199,7 +202,12 @@ public class Parser {
         return java.toString();
     }
 
-    public int parseBlock(int lineStart, ScopeStack scopes, StringBuilder java, String currWhitespace) {
+    public int parseBlock(
+        int lineStart,
+        ScopeStack scopes,
+        StringBuilder java,
+        String currWhitespace
+    ) {
         java.append("{\n");
         boolean ifOpen = false;
         int linesParsed = 0;
@@ -263,6 +271,8 @@ public class Parser {
                 linesParsed += parsed;
             } else if (PRINT_STMT.matcher(line).matches()) {
                 handlePrint(trimmed, java, scopes);
+            } else if (INDEXER_ASSIGN.matcher(line).matches()) {
+                handleRayIndexAssignment(trimmed, java, scopes);
             } else if (!PASS_STMT.matcher(line).matches()) {
                 throw new InvalidStatementError("`" + trimmed.judo.toString() + "`", ln);
             }
@@ -294,20 +304,19 @@ public class Parser {
                 line.lineNum
             );
         }
-        String javaType;
         Matcher indexer = INDEXER_ACCESS.matcher(value);
+        Type t;
         if (MATH_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.INT));
-            javaType = "int";
+            t = Type.INT;
         } else if (BOOL_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.BOOL));
-            javaType = "boolean ";
+            t = Type.BOOL;
         } else if (STRING_GRAMMAR.validateNoThrow(value)) {
             curScope.put(varName, new Variable(varName, Type.STRING));
-            javaType = "String";
+            t = Type.STRING;
         } else if (RAY_GRAMMAR.validateNoThrow(value)) {
-            Type t = RAY_GRAMMAR.categorizeNoThrow(value);
-            javaType = t.javaType;
+            t = RAY_GRAMMAR.categorizeNoThrow(value);
             curScope.put(varName, new Variable(varName, t));
             value = value.replaceAll("\\[", "{").replaceAll("]", "}");
         } else if (indexer.matches()) {
@@ -321,8 +330,7 @@ public class Parser {
             } else if (ray.equals(ARGOS)) {
                 value = format("Integer.parseInt({0})", value);
             }
-            Type t = ray.type.listOf;
-            javaType = t.javaType;
+            t = ray.type.listOf;
             validateByScalarType(indexer.group("index"), t);
             curScope.put(varName, new Variable(varName, t));
         } else {
@@ -331,12 +339,13 @@ public class Parser {
                 line.lineNum
             );
         }
+        VAR_GRAMMAR.validate(varName);
         java
-            .append(javaType)
+            .append(t.javaType)
             .append(" ")
             .append(varName)
             .append(" = ")
-            .append(finalReplacements(value))
+            .append(finalReplacements(value, t))
             .append(";\n");
     }
 
@@ -354,18 +363,20 @@ public class Parser {
         }
     }
 
-    private String finalReplacements(CharSequence input) {
-        //TODO: this will replace T, F, or, and in string literals
+    private String finalReplacements(CharSequence input, Type t) {
         String res = input.toString().trim();
         String re = "( +{0} +)|(^{0} +)|( +{0}$)|(^{0}$)";
-        res =
-            res
-                .replaceAll(format(re, "T"), " true ")
-                .replaceAll(format(re, "F"), " false ")
-                .replaceAll(format(re, "and"), " && ")
-                .replaceAll(format(re, "or"), " || ")
-                .replaceAll(format(re, "mod"), " % ")
-                .replaceAll(format(re, "not"), " ! ");
+        if (t == Type.INT) {
+            res = res.replaceAll(format(re, "mod"), " % ");
+        } else if (t == Type.BOOL) {
+            res =
+                res
+                    .replaceAll(format(re, "T"), " true ")
+                    .replaceAll(format(re, "F"), " false ")
+                    .replaceAll(format(re, "and"), " && ")
+                    .replaceAll(format(re, "or"), " || ")
+                    .replaceAll(format(re, "not"), " ! ");
+        }
         return res;
     }
 
@@ -422,7 +433,7 @@ public class Parser {
             .append(varName)
             .append(" = ")
             .append(arrayReinit)
-            .append(finalReplacements(value))
+            .append(finalReplacements(value, var.type))
             .append(";\n");
     }
 
@@ -431,7 +442,7 @@ public class Parser {
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition);
         scopes.pushNewScope();
-        java.append("if (").append(finalReplacements(condition)).append(") ");
+        java.append("if (").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
     public void handleElf(Line line, StringBuilder java, ScopeStack scopes) {
@@ -439,7 +450,7 @@ public class Parser {
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition);
         scopes.pushNewScope();
-        java.append("else if (").append(finalReplacements(condition)).append(") ");
+        java.append("else if (").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
     public void handleElse(Line line, StringBuilder java, ScopeStack scopes) {
@@ -460,12 +471,12 @@ public class Parser {
         MATH_GRAMMAR.validate(lo);
         MATH_GRAMMAR.validate(hi);
 
-//        int hi;
-//        try {
-//            hi = Integer.parseInt(m.group("hi"));
-//        } catch (NumberFormatException e) {
-//            throw new InvalidStatementError("Bad high value in range in for-loop");
-//        }
+        //        int hi;
+        //        try {
+        //            hi = Integer.parseInt(m.group("hi"));
+        //        } catch (NumberFormatException e) {
+        //            throw new InvalidStatementError("Bad high value in range in for-loop");
+        //        }
 
         String stepString = m.group("step");
         int step = 1;
@@ -502,7 +513,6 @@ public class Parser {
         Type rayType = scopes.find(m.group("array")).type;
         scopes.pushNewScope();
         scopes.addToCurrScope(loopVar, new Variable(loopVar, rayType));
-
         java
             .append("for(")
             .append(rayType.listOf)
@@ -518,25 +528,66 @@ public class Parser {
         Matcher m = armMatcher(LOOP_STMT, line.judo);
         String condition = m.group("condition");
         BOOL_GRAMMAR.validate(condition); //throws on its own
-        java.append("while(").append(finalReplacements(condition)).append(") ");
+        java.append("while(").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
     public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(PRINT_STMT, line.judo);
         String arg = m.group("argument");
         String ln = m.group("line");
-        boolean matchedSomething = arg.isBlank();
-        matchedSomething |= VAR_GRAMMAR.validateNoThrow(arg);
-        matchedSomething |= MATH_GRAMMAR.validateNoThrow(arg);
-        matchedSomething |= BOOL_GRAMMAR.validateNoThrow(arg);
-        matchedSomething |= STRING_GRAMMAR.validateNoThrow(arg);
-        if (!matchedSomething) {
+        Type argType;
+        if (arg.isBlank()) {
+            argType = null;
+        } else if (VAR_GRAMMAR.validateNoThrow(arg)) {
+            Variable v = scopes.find(arg);
+            argType = v.type;
+        } else if (MATH_GRAMMAR.validateNoThrow(arg)) {
+            argType = Type.INT;
+        } else if (BOOL_GRAMMAR.validateNoThrow(arg)) {
+            argType = Type.BOOL;
+        } else if (STRING_GRAMMAR.validateNoThrow(arg)) {
+            argType = Type.STRING;
+        } else if (INDEXER_ACCESS.matcher(arg).matches()) {
+            Matcher idxM = armMatcher(INDEXER_ACCESS, arg);
+            Variable v = scopes.find(idxM.group("var"));
+            if (!v.type.isArray()) {
+                throw new TypeError(
+                    format("Variable `{0}` isn't an array type and can't be indexed", arg),
+                    line.lineNum
+                );
+            }
+            argType = v.type.listOf;
+        } else {
             throw new InvalidStatementError("Invalid argument to out: " + arg, line.lineNum);
         }
         java
             .append(ln == null ? "System.out.print(" : "System.out.println(")
-            .append(finalReplacements(arg))
+            .append(finalReplacements(arg, argType))
             .append(");\n");
+    }
+
+    public void handleRayIndexAssignment(Line line, StringBuilder java, ScopeStack scopes) {
+        Matcher m = armMatcher(INDEXER_ASSIGN, line.judo);
+        String rayName = m.group("var");
+        String index = m.group("index");
+        String value = m.group("value");
+        Variable ray = scopes.find(rayName);
+        if (!ray.type.isArray()) {
+            throw new TypeError(
+                format("Variable `{0}` isn't an array type and can't be indexed", rayName),
+                line.lineNum
+            );
+        }
+        Type scalarType = ray.type.listOf;
+        validateByScalarType(index, Type.INT);
+        validateByScalarType(value, scalarType);
+        java
+            .append(rayName)
+            .append("[")
+            .append(finalReplacements(index, Type.INT))
+            .append("] = ")
+            .append(finalReplacements(value, scalarType))
+            .append(";");
     }
 
     private static class Line {

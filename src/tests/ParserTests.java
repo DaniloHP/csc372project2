@@ -14,6 +14,7 @@ import parser.Parser;
 import parser.errors.IndentationError;
 import parser.errors.InvalidStatementError;
 import parser.errors.TypeError;
+import parser.errors.VariableError;
 
 public class ParserTests {
 
@@ -74,6 +75,21 @@ public class ParserTests {
     }
 
     @Test
+    void testIndexing() {
+        final Parser p = new Parser("judo-files/valid/indexing.judo");
+        String className = "TestIndexing";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+    @Test
+    void testReplacement() {
+        final Parser p = new Parser("judo-files/valid/replacement.judo");
+        String className = "TestReplacement";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
     void testGeneral() {
         final Parser p = new Parser("judo-files/valid/general.judo");
         String className = "TestGeneral";
@@ -93,6 +109,13 @@ public class ParserTests {
         final Parser p = new Parser("judo-files/invalid/badprint.judo");
         String className = "TestBadPrint";
         assertThrows(InvalidStatementError.class, () -> p.parseFull(className));
+    }
+
+    @Test
+    void testVariableErrors() {
+        final Parser p = new Parser("judo-files/invalid/reserved.judo");
+        String className = "TestBadPrint";
+        assertThrows(VariableError.class, () -> p.parseFull(className));
     }
 
     @Test

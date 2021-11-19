@@ -36,11 +36,6 @@ public class MathGrammar extends Grammar {
                 modRuleRight
             )
         );
-        // <ex-expr>
-        Rule expRule = new Rule("(?<left>.*)\\^(?<right>.*)", "EXPONENTIATION");
-        Rule expRuleRight = new Rule("(?<left>.*?)\\^(?<right>.*)", "EXPONENTIATION_RIGHT");
-        Rule expDownRule = new Rule(BASE_DOWN_RULE, "DOWN_EXP");
-        List<Rule> exExpr = new ArrayList<>(List.of(expRule, expRuleRight, expDownRule));
         // <root>
         Rule parenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         Rule negRule = new Rule("-(?<inner>.*)", "UNARY_NEGATIVE");
@@ -54,14 +49,10 @@ public class MathGrammar extends Grammar {
         parenRule.addChildren("inner", asExpr);
         negRule.addChildren("inner", asExpr);
 
-        // <ex_expr>
-        populateBinaryRules(exExpr, rootExpr, expRule, expRuleRight);
-        expDownRule.addChildren("inner", rootExpr);
-
         // <mmd_expr>
         populateBinaryRules(
             mmdExpr,
-            exExpr,
+            rootExpr,
             mulRule,
             divRule,
             modRule,
@@ -69,11 +60,11 @@ public class MathGrammar extends Grammar {
             divRuleRight,
             modRuleRight
         );
-        mmdDownRule.addChildren("inner", exExpr);
+        mmdDownRule.addChildren("inner", rootExpr);
 
         // <as_expr>
         populateBinaryRules(asExpr, mmdExpr, addRule, subRule, addRuleRight, subRuleRight);
         asDownRule.addChildren("inner", mmdExpr);
-        levels.addAll(List.of(asExpr, mmdExpr, exExpr, rootExpr));
+        levels.addAll(List.of(asExpr, mmdExpr, rootExpr));
     }
 }

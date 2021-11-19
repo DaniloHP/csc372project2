@@ -13,7 +13,7 @@ import parser.errors.VariableError;
 public class VarRule extends Rule {
 
     public static final Set<String> NONVALUE_KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop")
+        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "mod")
     );
     public static final Set<String> VALUE_KEYWORDS = new HashSet<>(List.of("T", "F"));
     private static final Map<String, Variable> BUILTINS_AS_VARIABLES = new HashMap<>() {
@@ -25,9 +25,10 @@ public class VarRule extends Rule {
     };
 
     public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F")
+        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "T", "F", "mod")
     ); // = NONVALUE_KEYWORDS U VALUE_KEYWORDS
-    public static boolean checkVarTypes = false;
+    public static boolean checkVarTypes = true;
+    public static boolean checkAgainstKeywords = true;
     private static ScopeStack scopes;
 
     private Type type;
@@ -55,7 +56,7 @@ public class VarRule extends Rule {
     @Override
     public boolean validate(CharSequence toCheck) {
         //this.type may be null, and that's fine.
-        return this.validate(toCheck, this.type, false, !checkVarTypes);
+        return this.validate(toCheck, this.type, checkAgainstKeywords, checkVarTypes);
     }
 
     public boolean validate(

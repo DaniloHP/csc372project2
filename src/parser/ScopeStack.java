@@ -41,14 +41,15 @@ public class ScopeStack extends Stack<Map<String, Variable>> {
     public Variable find(String varName, boolean doThrow) {
         //I can take advantage of the silliness of Java's built-in stack to just
         //iterate through it, top down.
+        String trimmed = varName.trim();
         for (int i = this.size() - 1; i >= 0; i--) {
             var scope = this.get(i);
-            if (scope.containsKey(varName)) {
-                return scope.get(varName);
+            if (scope.containsKey(trimmed)) {
+                return scope.get(trimmed);
             }
         }
         if (doThrow) {
-            throw new VariableError(format("Variable `{0}` not found", varName));
+            throw new VariableError(format("Variable `{0}` not found", trimmed));
         }
         return null;
     }
