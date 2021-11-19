@@ -7,7 +7,7 @@
 
 let maxstars = argos[0]                ? Number of stars to print in middle row
 
-if maxstars%2 == 0:                    ? Make number of stars odd
+if maxstars mod 2 == 0:                    ? Make number of stars odd
     maxstars = maxstars + 1
 
 let spaces = (maxstars - 1)/2          ? Spaces on each side
