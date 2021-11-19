@@ -3,3 +3,4 @@
 out
 node_modules
 src/tests/generated-java
+.DS_Store
