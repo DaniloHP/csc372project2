@@ -3,6 +3,8 @@ import static java.text.MessageFormat.format;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import parser.Parser;
 
@@ -14,7 +16,7 @@ public class Translator {
             System.exit(1);
         }
         Parser parser = new Parser(args[0]);
-        Path judoFile = Path.of(args[0]);
+        Path judoFile = FileSystems.getDefault().getPath(args[0]);
         String judoFileName = judoFile.getFileName().toString();
         int index = judoFileName.lastIndexOf('.');
         String javaFileName = index > 0 ? judoFileName.substring(0, index) : judoFileName;

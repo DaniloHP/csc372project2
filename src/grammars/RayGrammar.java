@@ -3,6 +3,8 @@ package grammars;
 import static java.text.MessageFormat.format;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,13 +23,13 @@ public class RayGrammar extends Grammar {
         this.rayUnwrap = Pattern.compile("\\[ *(?<ray>.+?) *\\]");
         String rayRe = "( *(?<curr>.+?) *(, *(?<rest>.*)))|( *(?<last>.+?) *)";
         this.intRayRule = new RayRule(rayRe, "INT_LIST");
-        List<Rule> intRayExpr = new ArrayList<>(List.of(intRayRule));
+        List<Rule> intRayExpr = Collections.singletonList(intRayRule);
 
         this.boolRayRule = new RayRule(rayRe, "BOOL_LIST");
-        List<Rule> boolRayExpr = new ArrayList<>(List.of(boolRayRule));
+        List<Rule> boolRayExpr = Collections.singletonList(boolRayRule);
 
         this.strRayRule = new RayRule(rayRe, "STRING_LIST");
-        List<Rule> strRayExpr = new ArrayList<>(List.of(strRayRule));
+        List<Rule> strRayExpr = Collections.singletonList(strRayRule);
 
         populateRayRules(mg.exposeEntrypoint(), intRayExpr, intRayRule);
         populateRayRules(bg.exposeEntrypoint(), boolRayExpr, boolRayRule);

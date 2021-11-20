@@ -18,7 +18,7 @@ public class ScopeStack extends Stack<Map<String, Variable>> {
     }
 
     public void addToCurrScope(CharSequence varName, Variable var) {
-        var currScope = this.peek();
+        Map<String, Variable> currScope = this.peek();
         if (currScope.containsKey(varName.toString())) {
             throw new VariableError(
                 format("Variable `{0}` already exists in this scope.", varName)
@@ -42,7 +42,7 @@ public class ScopeStack extends Stack<Map<String, Variable>> {
         //iterate through it, top down.
         String trimmed = varName.trim();
         for (int i = this.size() - 1; i >= 0; i--) {
-            var scope = this.get(i);
+            Map<String, Variable> scope = this.get(i);
             if (scope.containsKey(trimmed)) {
                 return scope.get(trimmed);
             }
