@@ -1,0 +1,7 @@
+let strs = s{100}
+let nums = i{100}
+let bools = b{100}
+
+nums = i{10}
+bools = b{15}
+strs = s{90}
