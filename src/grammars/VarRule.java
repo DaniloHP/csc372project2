@@ -2,7 +2,11 @@ package grammars;
 
 import static java.text.MessageFormat.format;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import parser.ScopeStack;
 import parser.Type;

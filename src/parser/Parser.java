@@ -3,6 +3,7 @@ package parser;
 import static java.text.MessageFormat.format;
 
 import grammars.BoolGrammar;
+import grammars.Grammar;
 import grammars.MathGrammar;
 import grammars.RayGrammar;
 import grammars.StringGrammar;
@@ -30,6 +31,7 @@ public class Parser {
     private static final Pattern WS_YANK = Pattern.compile("(?<whitespace>[ \\t]+)(?<rest>.*)");
     private static final Pattern WS_SPLIT = Pattern.compile("(?<whitespace>[ \\t]*)(?<rest>.*)");
     private static final Pattern EMPTY_LINE = Pattern.compile("\\s*(\\?.*)?");
+    private static final Pattern RAY_EXTRACTOR = Pattern.compile("\\[ *(?<innerRay>.*) *]");
     private static final Pattern INDEXER_ACCESS = Pattern.compile(
         " *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *\\[ *(?<index>.*?) *]"
     );
@@ -318,12 +320,11 @@ public class Parser {
         } else if (RAY_GRAMMAR.validateNoThrow(value)) {
             t = RAY_GRAMMAR.categorizeNoThrow(value);
             curScope.put(varName, new Variable(varName, t));
-            value = value.replaceAll("\\[", "{").replaceAll("]", "}");
         } else if (INDEXER_ACCESS.matcher(value).matches()) {
             Matcher indexer = armMatcher(INDEXER_ACCESS, value);
             String rayName = indexer.group("var");
             Variable ray = scopes.find(rayName);
-            if (!ray.type.isArray()) {
+            if (!ray.type.isRayType()) {
                 throw new TypeError(
                     format("Variable `{0}` isn't an array type and can't be indexed", rayName),
                     line.lineNum
@@ -372,33 +373,55 @@ public class Parser {
     }
 
     private void validateByScalarType(CharSequence expression, Type expected) {
-        switch (expected) {
+        if (expected.isRayType()) {
+            throw new IllegalArgumentException("Only use this function for scalar types");
+        } else {
+            typeToGrammar(expected).validate(expression);
+        }
+    }
+
+    private Grammar typeToGrammar(Type t) {
+        switch (t) {
             case INT -> {
-                MATH_GRAMMAR.validate(expression);
+                return MATH_GRAMMAR;
             }
             case BOOL -> {
-                BOOL_GRAMMAR.validate(expression);
+                return BOOL_GRAMMAR;
             }
             case STRING -> {
-                STRING_GRAMMAR.validate(expression);
+                return STRING_GRAMMAR;
+            }
+            default -> {
+                return RAY_GRAMMAR;
             }
         }
     }
 
-    private String finalReplacements(CharSequence input, Type t) {
-        String res = input.toString().trim();
-        String re = "( +{0} +)|(^{0} +)|( +{0}$)|(^{0}$)";
-        if (t != Type.STRING && t != Type.STRING_LIST) {
-            res =
-                res
-                    .replaceAll(format(re, "T"), " true ")
-                    .replaceAll(format(re, "F"), " false ")
-                    .replaceAll(format(re, "and"), " && ")
-                    .replaceAll(format(re, "mod"), " % ")
-                    .replaceAll(format(re, "or"), " || ")
-                    .replaceAll(format(re, "not"), " ! ");
+    private String finalReplacements(CharSequence expression, Type t) {
+        String trimmed = expression.toString().trim();
+        String res = null;
+        if (t == null) {
+            res = trimmed;
+        } else if (t.isRayType()) {
+            //if the given expression is an array, split it by comma and
+            //run the replacer on each scalar element.
+            Matcher m = RAY_EXTRACTOR.matcher(trimmed);
+            if (m.matches()) {
+                String[] els = m.group("innerRay").split(",");
+                StringBuilder sb = new StringBuilder("{");
+                for (int i = 0; i < els.length; i++) {
+                    sb.append(finalReplacements(els[i], t.listOf));
+                    if (i < els.length - 1) {
+                        sb.append(",");
+                    }
+                }
+                res = sb.append("}").toString();
+            }
+        } else {
+            Grammar g = typeToGrammar(t);
+            res = g.keywordsToJava(trimmed);
         }
-        return res;
+        return res == null ? trimmed : res;
     }
 
     public void handleReassignment(Line line, StringBuilder java, ScopeStack scopes) {
@@ -412,7 +435,7 @@ public class Parser {
         if (indexer.matches()) {
             String rayName = indexer.group("var");
             Variable ray = scopes.find(rayName);
-            if (ray.type.isArray()) {
+            if (ray.type.isRayType()) {
                 throw new TypeError(
                     format("Variable `{0}` isn't an array type and can't be indexed", rayName),
                     line.lineNum
@@ -454,7 +477,6 @@ public class Parser {
                 default -> { //one of the list types
                     passed = RAY_GRAMMAR.categorize(value) == var.type;
                     arrayReinit = format("new {0}[]", var.type.listOf.javaType);
-                    value = value.replaceFirst("\\[", "{").replace(']', '}');
                 }
             }
         }
@@ -589,7 +611,7 @@ public class Parser {
         } else if (INDEXER_ACCESS.matcher(arg).matches()) {
             Matcher idxM = armMatcher(INDEXER_ACCESS, arg);
             Variable v = scopes.find(idxM.group("var"));
-            if (!v.type.isArray()) {
+            if (!v.type.isRayType()) {
                 throw new TypeError(
                     format("Variable `{0}` isn't an array type and can't be indexed", arg),
                     line.lineNum
@@ -611,7 +633,7 @@ public class Parser {
         String index = m.group("index");
         String value = m.group("value");
         Variable ray = scopes.find(rayName);
-        if (!ray.type.isArray()) {
+        if (!ray.type.isRayType()) {
             throw new TypeError(
                 format("Variable `{0}` isn't an array type and can't be indexed", rayName),
                 line.lineNum

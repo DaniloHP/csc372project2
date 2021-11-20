@@ -1,8 +1,17 @@
 package tests;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import grammars.*;
+import grammars.BoolGrammar;
+import grammars.Grammar;
+import grammars.MathGrammar;
+import grammars.RayGrammar;
+import grammars.StringGrammar;
+import grammars.VarGrammar;
+import grammars.VarRule;
 import java.util.HashMap;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;

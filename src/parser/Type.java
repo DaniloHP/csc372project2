@@ -16,7 +16,7 @@ public enum Type {
         this.listOf = listOf;
     }
 
-    public boolean isArray() {
+    public boolean isRayType() {
         return this.javaType.endsWith("[]");
     }
 
