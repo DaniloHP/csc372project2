@@ -36,6 +36,7 @@ public class Parser {
     private static final Pattern INDEXER_ASSIGN = Pattern.compile(
         " *(?<var>[\\w&&[^\\d]][\\w]{0,31}) *\\[ *(?<index>.*?) *] *= *(?<value>.+)"
     );
+    private static final Pattern RAY_INIT = Pattern.compile(" *(?<type>[bsi])\\{ *(?<n>.*?) *} *");
 
     private static final Pattern IF_STMT = Pattern.compile("[ \\t]*if +(?<condition>.*?) *: *");
     private static final Pattern ELF_STMT = Pattern.compile("[ \\t]*elf +(?<condition>.*?) *: *");
@@ -333,6 +334,13 @@ public class Parser {
             t = ray.type.listOf;
             validateByScalarType(indexer.group("index"), t);
             curScope.put(varName, new Variable(varName, t));
+        } else if (RAY_INIT.matcher(value).matches()) {
+            Matcher rayInit = armMatcher(RAY_INIT, value);
+            t = initMatcherType(rayInit);
+            String n = rayInit.group("n");
+            validateByScalarType(n, Type.INT);
+            value = format("new {0}[{1}]", t.listOf.javaType, n);
+            curScope.put(varName, new Variable(varName, t));
         } else {
             throw new InvalidStatementError(
                 format("Unrecognized expression: {0}", value),
@@ -347,6 +355,18 @@ public class Parser {
             .append(" = ")
             .append(finalReplacements(value, t))
             .append(";\n");
+    }
+
+    private Type initMatcherType(Matcher initMatcher) {
+        switch (initMatcher.group("type")) {
+            case "i" -> {
+                return Type.INT_LIST;
+            } case "b" -> {
+                return Type.BOOL_LIST;
+            } default ->  {
+                return Type.STRING_LIST;
+            }
+        }
     }
 
     private void validateByScalarType(CharSequence expression, Type expected) {
@@ -366,7 +386,7 @@ public class Parser {
     private String finalReplacements(CharSequence input, Type t) {
         String res = input.toString().trim();
         String re = "( +{0} +)|(^{0} +)|( +{0}$)|(^{0}$)";
-        if (t == Type.BOOL || t == Type.INT_LIST) {
+        if (t != Type.STRING && t != Type.STRING_LIST) {
             res =
                 res
                     .replaceAll(format(re, "T"), " true ")
@@ -399,6 +419,16 @@ public class Parser {
             Type t = ray.type.listOf;
             MATH_GRAMMAR.validate(indexer.group("index"));
             //^ this will throw if it isn't valid
+            passed = true;
+        } else if (RAY_INIT.matcher(value).matches()) {
+            Matcher rayInit = armMatcher(RAY_INIT, value);
+            Type t = initMatcherType(rayInit);
+            if (var.type != t) {
+                throw new TypeError(format("Variable `{0}` was expected to be of type {1}, but found {2}", varName, var.type.javaType, t.javaType), line.lineNum);
+            }
+            String n = rayInit.group("n");
+            validateByScalarType(n, Type.INT);
+            value = format("new {0}[{1}]", t.listOf.javaType, n);
             passed = true;
         } else {
             switch (var.type) {

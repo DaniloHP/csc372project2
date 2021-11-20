@@ -91,6 +91,14 @@ public class ParserTests {
     }
 
     @Test
+    void testRayInit() {
+        final Parser p = new Parser("judo-files/valid/rayinit.judo");
+        String className = "TestRayInit";
+        String code = p.parseFull(className);
+        runGeneratedJava(code, className);
+    }
+
+    @Test
     void testGeneral() {
         final Parser p = new Parser("judo-files/valid/general.judo");
         String className = "TestGeneral";
