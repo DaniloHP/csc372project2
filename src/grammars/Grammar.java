@@ -1,7 +1,5 @@
 package grammars;
 
-import static java.text.MessageFormat.format;
-
 import java.util.ArrayList;
 import java.util.List;
 import parser.errors.TypeError;
@@ -52,5 +50,15 @@ public abstract class Grammar {
             rule.addChildren("left", left);
             rule.addChildren("right", right);
         }
+    }
+
+    public String keywordsToJava(CharSequence toReplace) {
+        for (Rule r : levels.get(0)) {
+            String replaced = r.replace(toReplace);
+            if (replaced != null) {
+                return replaced;
+            }
+        }
+        return null;
     }
 }

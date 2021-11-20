@@ -1,5 +1,7 @@
 package grammars;
 
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
 import parser.Type;
@@ -13,25 +15,25 @@ public class BoolGrammar extends Grammar {
     public BoolGrammar(MathGrammar mg, VarGrammar vg) {
         super();
         //<or_expr>
-        Rule orRule = new Rule("(?<left>.*) +or +(?<right>.*)", "OR");
-        Rule orRuleRight = new Rule("(?<left>.*) +or +(?<right>.*)", "OR_RIGHT");
+        Rule orRule = new Rule("(?<left>.*) +(?<replaceMe>or) +(?<right>.*)", "OR", new SimpleEntry<>("or", "||"));
+        Rule orRuleRight = new Rule("(?<left>.*) +(?<replaceMe>or) +(?<right>.*)", "OR_RIGHT", new SimpleEntry<>("or", "||"));
         Rule orDownRule = new Rule(BASE_DOWN_RULE, "DOWN_OR");
         List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
 
         //<and_expr>
-        Rule andRule = new Rule("(?<left>.*) +and +(?<right>.*)", "AND");
-        Rule andRuleRight = new Rule("(?<left>.*?) +and +(?<right>.*)", "AND_RIGHT");
+        Rule andRule = new Rule("(?<left>.*) +(?<replaceMe>and) +(?<right>.*)", "AND", new SimpleEntry<>("and", "&&"));
+        Rule andRuleRight = new Rule("(?<left>.*?) +(?<replaceMe>and) +(?<right>.*)", "AND_RIGHT", new SimpleEntry<>("and", "&&"));
         Rule andDownRule = new Rule(BASE_DOWN_RULE, "DOWN_AND");
         List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
 
         //<not_expr>
-        Rule notRule = new Rule("not +(?<inner>.*)", "UNARY NOT");
+        Rule notRule = new Rule("(?<replaceMe>not) +(?<inner>.*)", "UNARY NOT", new SimpleEntry<>("not", "!"));
         Rule notDownRuleToRoot = new Rule(BASE_DOWN_RULE, "DOWN_TO_ROOT");
         Rule notDownRuleToCmp = new Rule(BASE_DOWN_RULE, "DOWN_TO_CMP");
         List<Rule> notExpr = new ArrayList<>(List.of(notRule, notDownRuleToRoot, notDownRuleToCmp));
 
         //<bool>
-        Rule bool = new Rule("[TF]", "BOOL");
+        Rule bool = new Rule("(?<replaceMe>[TF])", "BOOL", new SimpleEntry<>("T", "true"), new SimpleEntry<>("F", "false"));
         Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         VarRule boolVarRule = new VarRule(VAR_RULE, "BOOL_VAR");
         boolVarRule.useType(Type.BOOL);
