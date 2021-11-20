@@ -361,9 +361,11 @@ public class Parser {
         switch (initMatcher.group("type")) {
             case "i" -> {
                 return Type.INT_LIST;
-            } case "b" -> {
+            }
+            case "b" -> {
                 return Type.BOOL_LIST;
-            } default ->  {
+            }
+            default -> {
                 return Type.STRING_LIST;
             }
         }
@@ -424,7 +426,15 @@ public class Parser {
             Matcher rayInit = armMatcher(RAY_INIT, value);
             Type t = initMatcherType(rayInit);
             if (var.type != t) {
-                throw new TypeError(format("Variable `{0}` was expected to be of type {1}, but found {2}", varName, var.type.javaType, t.javaType), line.lineNum);
+                throw new TypeError(
+                    format(
+                        "Variable `{0}` was expected to be of type {1}, but found {2}",
+                        varName,
+                        var.type.javaType,
+                        t.javaType
+                    ),
+                    line.lineNum
+                );
             }
             String n = rayInit.group("n");
             validateByScalarType(n, Type.INT);

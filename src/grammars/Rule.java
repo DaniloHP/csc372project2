@@ -90,8 +90,9 @@ public class Rule {
         Matcher matcher = regex.matcher(toReplace);
         if (!toReplace.isEmpty() && matcher.matches()) {
             if (this.isTerminal()) {
-                if (this.replacements != null && this.replacements.containsKey(
-                        toReplace.toString())) {
+                if (
+                    this.replacements != null && this.replacements.containsKey(toReplace.toString())
+                ) {
                     return this.replacements.get(toReplace.toString());
                 }
                 return toReplace.toString();
@@ -105,8 +106,8 @@ public class Rule {
                 for (Rule rule : children.get(groupName)) {
                     String childReplaced = rule.replace(currGroup);
                     if (childReplaced != null) {
-                        replacedCopy = replaceGroupName(toReplace.toString(), groupName,
-                                childReplaced);
+                        replacedCopy =
+                            replaceGroupName(toReplace.toString(), groupName, childReplaced);
                         resultVector[i] = true;
                     }
                     if (allTrue(resultVector)) {
@@ -118,8 +119,8 @@ public class Rule {
             if (this.replacements != null) {
                 String group = matcher.group("replaceMe").strip();
                 if (this.replacements.containsKey(group)) {
-                    replacedCopy = replaceGroupName(replacedCopy, "replaceMe",
-                            this.replacements.get(group));
+                    replacedCopy =
+                        replaceGroupName(replacedCopy, "replaceMe", this.replacements.get(group));
                 }
             }
             return allTrue(resultVector) ? replacedCopy : null;

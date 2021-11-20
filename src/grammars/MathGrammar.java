@@ -23,8 +23,16 @@ public class MathGrammar extends Grammar {
         Rule mulRuleRight = new Rule("(?<left>.*?)\\*(?<right>.*)", "MULTIPLICATION_RIGHT");
         Rule divRule = new Rule("(?<left>.*)/(?<right>.*)", "DIVISION");
         Rule divRuleRight = new Rule("(?<left>.*?)/(?<right>.*)", "DIVISION_RIGHT");
-        Rule modRule = new Rule("(?<left>.*) +(?<replaceMe>mod) +(?<right>.*)", "MODULUS", new AbstractMap.SimpleEntry<>("mod", "%"));
-        Rule modRuleRight = new Rule("(?<left>.*?) +(?<replaceMe>mod) +(?<right>.*)", "MODULUS_RIGHT", new AbstractMap.SimpleEntry<>("mod", "%"));
+        Rule modRule = new Rule(
+            "(?<left>.*) +(?<replaceMe>mod) +(?<right>.*)",
+            "MODULUS",
+            new AbstractMap.SimpleEntry<>("mod", "%")
+        );
+        Rule modRuleRight = new Rule(
+            "(?<left>.*?) +(?<replaceMe>mod) +(?<right>.*)",
+            "MODULUS_RIGHT",
+            new AbstractMap.SimpleEntry<>("mod", "%")
+        );
         Rule mmdDownRule = new Rule(BASE_DOWN_RULE, "DOWN_MMD");
         List<Rule> mmdExpr = new ArrayList<>(
             List.of(

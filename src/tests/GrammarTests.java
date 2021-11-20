@@ -1,5 +1,7 @@
 package tests;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import grammars.*;
 import java.util.HashMap;
 import org.junit.jupiter.api.MethodOrderer;
@@ -12,8 +14,6 @@ import parser.Variable;
 import parser.errors.InvalidStatementError;
 import parser.errors.TypeError;
 import parser.errors.VariableError;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests are run sequentially in the order they appear (top to bottom)
@@ -166,7 +166,10 @@ public class GrammarTests {
         assertEquals("fal_F_se && false", boolGrammar.keywordsToJava("fal_F_se and F"));
         assertEquals("false || true", boolGrammar.keywordsToJava("F or T"));
         assertEquals("false || true && true", boolGrammar.keywordsToJava("F or T and T"));
-        assertEquals("false || true && true || 1 < 1 % 0", boolGrammar.keywordsToJava("F or T and T or 1 < 1 mod 0"));
+        assertEquals(
+            "false || true && true || 1 < 1 % 0",
+            boolGrammar.keywordsToJava("F or T and T or 1 < 1 mod 0")
+        );
         assertEquals("true", boolGrammar.keywordsToJava("T"));
         assertEquals("! true", boolGrammar.keywordsToJava("not T"));
         assertEquals("! false", boolGrammar.keywordsToJava("not F"));
@@ -181,9 +184,18 @@ public class GrammarTests {
         assertEquals("false", boolGrammar.keywordsToJava("F"));
         assertEquals("1 % 10", mathGrammar.keywordsToJava("1 mod 10"));
         assertEquals("1 % 10 % 100 % 0", mathGrammar.keywordsToJava("1 mod 10 mod 100 mod 0"));
-        assertEquals("1 % 10 % 100 % 0 < 10", boolGrammar.keywordsToJava("1 mod 10 mod 100 mod 0 < 10"));
-        assertEquals("! (1 % 10 % 100 % 0 < 10)", boolGrammar.keywordsToJava("not (1 mod 10 mod 100 mod 0 < 10)"));
-        assertEquals("(x && (z == 10)) && ! (y != 100 || l || 5 < x) || (true)", boolGrammar.keywordsToJava("(x and (z == 10)) and not (y != 100 or l or 5 < x) or (T)"));
+        assertEquals(
+            "1 % 10 % 100 % 0 < 10",
+            boolGrammar.keywordsToJava("1 mod 10 mod 100 mod 0 < 10")
+        );
+        assertEquals(
+            "! (1 % 10 % 100 % 0 < 10)",
+            boolGrammar.keywordsToJava("not (1 mod 10 mod 100 mod 0 < 10)")
+        );
+        assertEquals(
+            "(x && (z == 10)) && ! (y != 100 || l || 5 < x) || (true)",
+            boolGrammar.keywordsToJava("(x and (z == 10)) and not (y != 100 or l or 5 < x) or (T)")
+        );
     }
 
     /**
