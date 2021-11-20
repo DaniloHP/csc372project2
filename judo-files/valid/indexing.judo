@@ -1,0 +1,16 @@
+let arr = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+for i in 0..20:
+    arr[i] = i
+
+for i in 0..20:
+    outln(arr[i + 1])
+
+for el in arr:
+    outln(el)
+
+let strArr = ["0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"]
+for i in 0..20:
+    strArr[i + 1] = "yeah"
+
+for str in strArr:
+    outln(str)

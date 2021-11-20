@@ -1,0 +1,22 @@
+? Project 2 - Design a language
+? Group Members: Danilo Hidalgo and Christian Trejo
+? File: Program 1
+? Purpose: Calculate and print number of multiples x
+?          and y in the range 1 to m.
+? Arguments: Three integers x, y, and m
+
+let x = argos[0]
+let y = argos[1]
+let m = argos[2]
+
+let numMultiples = 0
+
+for i in 1..m[1]:
+    if i mod x == 0:
+        numMultiples = numMultiples + 1
+
+    if i mod y == 0:
+        numMultiples = numMultiples + 1
+
+outln(numMultiples)
+

@@ -1,0 +1,4 @@
+let str = "I should stay the same and not be replaced or mod ified T F "
+let num = 10
+num = num mod 2
+let changeMe = num < 10 and num > 10 or num == 10

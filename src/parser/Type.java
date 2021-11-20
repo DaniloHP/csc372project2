@@ -1,5 +1,26 @@
 package parser;
 
 public enum Type {
-    INT, BOOL, STRING, INT_LIST, STRING_LIST
+    INT("int", null),
+    BOOL("boolean", null),
+    STRING("String", null),
+    INT_LIST("int[]", INT),
+    STRING_LIST("String[]", STRING),
+    BOOL_LIST("boolean[]", BOOL);
+
+    public final String javaType;
+    public final Type listOf;
+
+    Type(String javaType, Type listOf) {
+        this.javaType = javaType;
+        this.listOf = listOf;
+    }
+
+    public boolean isRayType() {
+        return this.javaType.endsWith("[]");
+    }
+
+    public String toString() {
+        return this.javaType;
+    }
 }

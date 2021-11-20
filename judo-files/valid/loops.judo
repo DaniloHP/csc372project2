@@ -1,0 +1,12 @@
+for i in 1..10:
+    hallpass
+for i in 1..10[2]:
+    hallpass
+let array = [1,2,3,4]
+for i in array:
+    hallpass
+
+let i = 10
+let j = i
+loop i < 10 and T or F or i != j:
+    hallpass

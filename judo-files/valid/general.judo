@@ -1,0 +1,13 @@
+let someInt = argos[0]
+if someInt % 2 == 0:
+    out("The argument is even")
+else:
+    out("The int is odd")
+
+for i in 1..100:
+    if i mod 15 == 0:
+        out("fizzbuzz")
+    elf i mod 5 == 0:
+        out("buzz")
+    elf i mod 3 == 0:
+        out("fizz")

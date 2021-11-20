@@ -1,40 +1,58 @@
 package grammars;
 
-import java.util.ArrayList;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Rule implements Cloneable {
+public class Rule {
 
-    private List<List<Rule>> children;
-    private Pattern regex;
-    private final int NUM_GROUPS;
-    public String id; //for debugging
+    protected Pattern regex;
+    protected Map<String, List<Rule>> children;
+    protected String id; //for debugging
+    protected Map<String, String> replacements;
 
     public Rule(CharSequence regexStr) {
+        children = new HashMap<>();
         regex = Pattern.compile(regexStr.toString());
-        NUM_GROUPS = regex.matcher("").groupCount();
-        children = new ArrayList<>(NUM_GROUPS);
     }
 
-    public Rule(CharSequence regexStr, String id) {
+    @SafeVarargs
+    public Rule(CharSequence regexStr, String id, SimpleEntry<String, String>... replacePairs) {
         this(regexStr);
         this.id = id;
-    }
-
-    public void addChildren(int group, List<Rule> level) {
-        assert group <= NUM_GROUPS;
-        while (children.size() < group) {
-            //grow array if necessary
-            children.add(null);
+        if (replacePairs != null && replacePairs.length > 0) {
+            this.replacements = new HashMap<>();
+            for (var pair : replacePairs) {
+                this.replacements.put(pair.getKey(), pair.getValue());
+            }
         }
-        children.set(group - 1, level);
     }
 
-    private boolean allTrue(boolean[] arr) {
-        for (var b : arr) {
+    public Rule(Rule other, String newId) {
+        this(other.regex.pattern());
+        this.id = newId;
+    }
+
+    public void addChildren(String group, List<Rule> level) {
+        if (children == null) children = new HashMap<>();
+        children.put(group, level);
+    }
+
+    protected boolean allTrue(boolean[] arr) {
+        for (boolean b : arr) {
             if (!b) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected boolean allNonNull(Object[] arr) {
+        for (Object o : arr) {
+            if (o == null) {
                 return false;
             }
         }
@@ -44,41 +62,84 @@ public class Rule implements Cloneable {
     public boolean validate(CharSequence toCheck) {
         Matcher matcher = regex.matcher(toCheck);
         if (!toCheck.isEmpty() && matcher.matches()) {
-            if (children.isEmpty()) {
+            if (this.isTerminal()) {
                 //it's a matching terminal
                 return true;
             }
-            var resultVector = new boolean[NUM_GROUPS];
-            for (int groupNum = 1; groupNum <= NUM_GROUPS; groupNum++) {
-                int i = groupNum - 1;
-                String currGroup = matcher.group(groupNum).strip();
-                for (Rule rule : children.get(i)) {
+            var resultVector = new boolean[children.size()];
+            int i = 0;
+            for (String k : children.keySet()) {
+                String currGroup = matcher.group(k).strip();
+                for (Rule rule : children.get(k)) {
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
                     }
-                    //cannot return false if the above isn't true.
+                    //I'm not worried about the performance implications of calling
+                    //allTrue every iteration because resultVector is at most len 2
+                    if (allTrue(resultVector)) {
+                        return true;
+                    }
                 }
+                i++;
             }
-            return allTrue(resultVector);
+            return false;
         } else {
             return false;
         }
     }
 
-    /**
-     * SHOULD ONLY EVER BE USED WITH RULES THAT HAVE NO CHILDREN YET
-     */
-    @Override
-    public Rule clone() {
-        try {
-            Rule clone = (Rule) super.clone();
-            clone.regex = this.regex;
-            clone.children = new ArrayList<>(this.NUM_GROUPS);
-            clone.id = this.id;
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
+    public String replace(CharSequence toReplace) {
+        Matcher matcher = regex.matcher(toReplace);
+        if (!toReplace.isEmpty() && matcher.matches()) {
+            if (this.isTerminal()) {
+                if (
+                    this.replacements != null && this.replacements.containsKey(toReplace.toString())
+                ) {
+                    return this.replacements.get(toReplace.toString());
+                }
+                return toReplace.toString();
+            }
+            int i = 0;
+            boolean[] resultVector = new boolean[children.size()];
+            String replacedCopy = toReplace.toString();
+            for (String groupName : children.keySet()) {
+                String currGroup = matcher.group(groupName).strip();
+                toReplace = replacedCopy;
+                for (Rule rule : children.get(groupName)) {
+                    String childReplaced = rule.replace(currGroup);
+                    if (childReplaced != null) {
+                        replacedCopy =
+                            replaceGroupName(toReplace.toString(), groupName, childReplaced);
+                        resultVector[i] = true;
+                    }
+                    if (allTrue(resultVector)) {
+                        break;
+                    }
+                }
+                i++;
+            }
+            if (this.replacements != null) {
+                String group = matcher.group("replaceMe").strip();
+                if (this.replacements.containsKey(group)) {
+                    replacedCopy =
+                        replaceGroupName(replacedCopy, "replaceMe", this.replacements.get(group));
+                }
+            }
+            return allTrue(resultVector) ? replacedCopy : null;
         }
+        return null;
+    }
+
+    protected String replaceGroupName(String toReplaceIn, String groupName, String replacement) {
+        Matcher m = regex.matcher(toReplaceIn);
+        m.matches();
+        int startIndex = m.start(groupName);
+        int endIndex = m.end(groupName);
+        return new StringBuilder(toReplaceIn).replace(startIndex, endIndex, replacement).toString();
+    }
+
+    protected boolean isTerminal() {
+        return this.children == null || this.children.isEmpty();
     }
 
     public String toString() {
