@@ -2,7 +2,11 @@ package grammars;
 
 import static java.text.MessageFormat.format;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import parser.ScopeStack;
 import parser.Type;
@@ -15,7 +19,6 @@ public class VarRule extends Rule {
     public static final Set<String> NONVALUE_KEYWORDS = new HashSet<>(
         Arrays.asList("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "mod")
     );
-    public static final Set<String> VALUE_KEYWORDS = new HashSet<>(Arrays.asList("T", "F"));
     private static final Map<String, Variable> BUILTINS_AS_VARIABLES = new HashMap<String, Variable>() {
         {
             put("T", new Variable("T", Type.BOOL));
@@ -39,7 +42,7 @@ public class VarRule extends Rule {
             "F",
             "mod"
         )
-    ); // = NONVALUE_KEYWORDS U VALUE_KEYWORDS
+    );
     public static boolean checkVarTypes = true;
     public static boolean checkAgainstKeywords = true;
     private static ScopeStack scopes;
