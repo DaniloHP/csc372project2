@@ -30,7 +30,7 @@ public class RayRule extends Rule {
     @Override
     public boolean validate(CharSequence toCheck) {
         Matcher matcher = regex.matcher(toCheck);
-        if (!toCheck.isEmpty() && matcher.matches()) {
+        if (toCheck.length() > 0 && matcher.matches()) {
             boolean[] resultVector;
             Map<String, String> groups = new HashMap<>();
             String lastGroup = groupOrNull(matcher, "last");
@@ -51,7 +51,7 @@ public class RayRule extends Rule {
                 );
             }
             int i = 0;
-            for (var val : groups.keySet()) {
+            for (String val : groups.keySet()) {
                 String group = groups.get(val);
                 for (Rule rule : children.get(val)) {
                     if (rule.validate(group)) {

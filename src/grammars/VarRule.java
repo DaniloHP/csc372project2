@@ -2,11 +2,7 @@ package grammars;
 
 import static java.text.MessageFormat.format;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import parser.ScopeStack;
 import parser.Type;
@@ -17,10 +13,10 @@ import parser.errors.VariableError;
 public class VarRule extends Rule {
 
     public static final Set<String> NONVALUE_KEYWORDS = new HashSet<>(
-        List.of("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "mod")
+        Arrays.asList("let", "if", "elf", "else", "argos", "hallpass", "out", "for", "loop", "mod")
     );
-    public static final Set<String> VALUE_KEYWORDS = new HashSet<>(List.of("T", "F"));
-    private static final Map<String, Variable> BUILTINS_AS_VARIABLES = new HashMap<>() {
+    public static final Set<String> VALUE_KEYWORDS = new HashSet<>(Arrays.asList("T", "F"));
+    private static final Map<String, Variable> BUILTINS_AS_VARIABLES = new HashMap<String, Variable>() {
         {
             put("T", new Variable("T", Type.BOOL));
             put("F", new Variable("F", Type.BOOL));
@@ -29,7 +25,7 @@ public class VarRule extends Rule {
     };
 
     public static final Set<String> RESERVED_KEYWORDS = new HashSet<>(
-        List.of(
+        Arrays.asList(
             "let",
             "if",
             "elf",
@@ -83,7 +79,7 @@ public class VarRule extends Rule {
         boolean doTypeCheck
     ) {
         Matcher m = this.regex.matcher(toCheck);
-        if (!toCheck.isEmpty() && m.matches()) {
+        if (toCheck.length() > 0 && m.matches()) {
             String varName = m.group("var");
             //In this block I check if it's a keyword?
             if (doKWCheck && VarRule.NONVALUE_KEYWORDS.contains(varName)) {
