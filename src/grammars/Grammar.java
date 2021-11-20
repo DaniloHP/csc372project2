@@ -46,7 +46,7 @@ public abstract class Grammar {
     }
 
     protected void populateBinaryRules(List<Rule> left, List<Rule> right, Rule... rules) {
-        for (var rule : rules) {
+        for (Rule rule : rules) {
             rule.addChildren("left", left);
             rule.addChildren("right", right);
         }

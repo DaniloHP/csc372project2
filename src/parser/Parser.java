@@ -87,7 +87,7 @@ public class Parser {
             int lineNum = 0;
             while (br.ready()) {
                 lineNum++;
-                String line = br.readLine().stripTrailing();
+                String line = br.readLine();
                 if (EMPTY_LINE.matcher(line).matches()) {
                     //lines of all whitespace or only comments are skipped
                     continue;
@@ -300,7 +300,7 @@ public class Parser {
         Matcher m = armMatcher(ASSIGN_STMT, line.judo);
         String varName = m.group("var");
         String value = m.group("rValue");
-        var curScope = scopes.peek();
+        Map<String, Variable> curScope = scopes.peek();
         if (curScope.containsKey(varName)) {
             throw new VariableError(
                 format("Variable `{0}`is already defined in this scope.", varName),
@@ -360,15 +360,12 @@ public class Parser {
 
     private Type initMatcherType(Matcher initMatcher) {
         switch (initMatcher.group("type")) {
-            case "i" -> {
+            case "i":
                 return Type.INT_LIST;
-            }
-            case "b" -> {
+            case "b":
                 return Type.BOOL_LIST;
-            }
-            default -> {
+            default:
                 return Type.STRING_LIST;
-            }
         }
     }
 
@@ -382,18 +379,14 @@ public class Parser {
 
     private Grammar typeToGrammar(Type t) {
         switch (t) {
-            case INT -> {
+            case INT:
                 return MATH_GRAMMAR;
-            }
-            case BOOL -> {
+            case BOOL:
                 return BOOL_GRAMMAR;
-            }
-            case STRING -> {
+            case STRING:
                 return STRING_GRAMMAR;
-            }
-            default -> {
+            default:
                 return RAY_GRAMMAR;
-            }
         }
     }
 
@@ -465,19 +458,18 @@ public class Parser {
             passed = true;
         } else {
             switch (var.type) {
-                case INT -> {
+                case INT:
                     passed = MATH_GRAMMAR.validateNoThrow(value);
-                }
-                case BOOL -> {
+                    break;
+                case BOOL:
                     passed = BOOL_GRAMMAR.validateNoThrow(value);
-                }
-                case STRING -> {
+                    break;
+                case STRING:
                     passed = STRING_GRAMMAR.validateNoThrow(value);
-                }
-                default -> { //one of the list types
+                    break;
+                default: //one of the list types
                     passed = RAY_GRAMMAR.categorize(value) == var.type;
                     arrayReinit = format("new {0}[]", var.type.listOf.javaType);
-                }
             }
         }
         if (!passed) {
@@ -597,7 +589,7 @@ public class Parser {
         String arg = m.group("argument");
         String ln = m.group("line");
         Type argType;
-        if (arg.isBlank()) {
+        if (arg.isEmpty()) {
             argType = null;
         } else if (VAR_GRAMMAR.validateNoThrow(arg)) {
             Variable v = scopes.find(arg);
@@ -667,7 +659,7 @@ public class Parser {
         }
 
         public Line trimmedCopy() {
-            StringBuilder sb = new StringBuilder(judo.toString().strip());
+            StringBuilder sb = new StringBuilder(judo.toString().trim());
             return new Line(sb, lineNum);
         }
 

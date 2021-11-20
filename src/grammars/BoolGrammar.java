@@ -2,6 +2,7 @@ package grammars;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import parser.Type;
 
@@ -25,7 +26,7 @@ public class BoolGrammar extends Grammar {
             new SimpleEntry<>("or", "||")
         );
         Rule orDownRule = new Rule(BASE_DOWN_RULE, "DOWN_OR");
-        List<Rule> orExpr = new ArrayList<>(List.of(orRule, orRuleRight, orDownRule));
+        List<Rule> orExpr = Arrays.asList(orRule, orRuleRight, orDownRule);
 
         //<and_expr>
         Rule andRule = new Rule(
@@ -39,7 +40,7 @@ public class BoolGrammar extends Grammar {
             new SimpleEntry<>("and", "&&")
         );
         Rule andDownRule = new Rule(BASE_DOWN_RULE, "DOWN_AND");
-        List<Rule> andExpr = new ArrayList<>(List.of(andRule, andRuleRight, andDownRule));
+        List<Rule> andExpr = Arrays.asList(andRule, andRuleRight, andDownRule);
 
         //<not_expr>
         Rule notRule = new Rule(
@@ -49,7 +50,7 @@ public class BoolGrammar extends Grammar {
         );
         Rule notDownRuleToRoot = new Rule(BASE_DOWN_RULE, "DOWN_TO_ROOT");
         Rule notDownRuleToCmp = new Rule(BASE_DOWN_RULE, "DOWN_TO_CMP");
-        List<Rule> notExpr = new ArrayList<>(List.of(notRule, notDownRuleToRoot, notDownRuleToCmp));
+        List<Rule> notExpr = Arrays.asList(notRule, notDownRuleToRoot, notDownRuleToCmp);
 
         //<bool>
         Rule bool = new Rule(
@@ -61,7 +62,7 @@ public class BoolGrammar extends Grammar {
         Rule boolParenRule = new Rule("\\((?<inner>.*)\\)", "PARENTHESES");
         VarRule boolVarRule = new VarRule(VAR_RULE, "BOOL_VAR");
         boolVarRule.useType(Type.BOOL);
-        List<Rule> boolRootExpr = new ArrayList<>(List.of(bool, boolParenRule, boolVarRule));
+        List<Rule> boolRootExpr = Arrays.asList(bool, boolParenRule, boolVarRule);
 
         //<comparison>: !=, ==, <, <=, >, >=
         Rule notEqualRule = new Rule("(?<left>.*) +!= +(?<right>.*)", "NOT_EQUAL");
@@ -76,21 +77,18 @@ public class BoolGrammar extends Grammar {
         Rule lteRuleRight = new Rule("(?<left>.*) +<= +(?<right>.*)", "LTE_RIGHT");
         Rule gteRule = new Rule("(?<left>.*) +>= +(?<right>.*)", "GTE");
         Rule gteRuleRight = new Rule("(?<left>.*) +>= +(?<right>.*)", "GTE_RIGHT");
-        List<Rule> comparisonExpr = new ArrayList<>(
-            List.of(
-                notEqualRule,
-                notEqualRuleRight,
-                equalRule,
-                equalRuleRight,
-                ltRule,
-                ltRuleRight,
-                gtRule,
-                gtRuleRight,
-                lteRule,
-                lteRuleRight,
-                gteRule,
-                gteRuleRight
-            )
+        List<Rule> comparisonExpr = Arrays.asList(
+            notEqualRuleRight,
+            equalRule,
+            equalRuleRight,
+            ltRule,
+            ltRuleRight,
+            gtRule,
+            gtRuleRight,
+            lteRule,
+            lteRuleRight,
+            gteRule,
+            gteRuleRight
         );
 
         //// Populate the levels, bottom up
@@ -127,6 +125,6 @@ public class BoolGrammar extends Grammar {
         //<or_expr>
         populateBinaryRules(orExpr, andExpr, orRule, orRuleRight);
         orDownRule.addChildren("inner", andExpr);
-        levels.addAll(List.of(orExpr, andExpr, notExpr, boolRootExpr, comparisonExpr));
+        levels.addAll(Arrays.asList(orExpr, andExpr, notExpr, boolRootExpr, comparisonExpr));
     }
 }

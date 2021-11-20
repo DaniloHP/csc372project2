@@ -25,7 +25,7 @@ public class Rule {
         this.id = id;
         if (replacePairs != null && replacePairs.length > 0) {
             this.replacements = new HashMap<>();
-            for (var pair : replacePairs) {
+            for (SimpleEntry<String, String> pair : replacePairs) {
                 this.replacements.put(pair.getKey(), pair.getValue());
             }
         }
@@ -61,15 +61,15 @@ public class Rule {
 
     public boolean validate(CharSequence toCheck) {
         Matcher matcher = regex.matcher(toCheck);
-        if (!toCheck.isEmpty() && matcher.matches()) {
+        if (toCheck.length() > 0 && matcher.matches()) {
             if (this.isTerminal()) {
                 //it's a matching terminal
                 return true;
             }
-            var resultVector = new boolean[children.size()];
+            boolean[] resultVector = new boolean[children.size()];
             int i = 0;
             for (String k : children.keySet()) {
-                String currGroup = matcher.group(k).strip();
+                String currGroup = matcher.group(k).trim();
                 for (Rule rule : children.get(k)) {
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
@@ -90,7 +90,7 @@ public class Rule {
 
     public String replace(CharSequence toReplace) {
         Matcher matcher = regex.matcher(toReplace);
-        if (!toReplace.isEmpty() && matcher.matches()) {
+        if (toReplace.length() > 0 && matcher.matches()) {
             if (this.isTerminal()) {
                 if (
                     this.replacements != null && this.replacements.containsKey(toReplace.toString())
@@ -103,7 +103,7 @@ public class Rule {
             boolean[] resultVector = new boolean[children.size()];
             String replacedCopy = toReplace.toString();
             for (String groupName : children.keySet()) {
-                String currGroup = matcher.group(groupName).strip();
+                String currGroup = matcher.group(groupName).trim();
                 toReplace = replacedCopy;
                 for (Rule rule : children.get(groupName)) {
                     String childReplaced = rule.replace(currGroup);
@@ -119,7 +119,7 @@ public class Rule {
                 i++;
             }
             if (this.replacements != null) {
-                String group = matcher.group("replaceMe").strip();
+                String group = matcher.group("replaceMe").trim();
                 if (this.replacements.containsKey(group)) {
                     replacedCopy =
                         replaceGroupName(replacedCopy, "replaceMe", this.replacements.get(group));
