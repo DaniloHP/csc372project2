@@ -25,6 +25,11 @@ import parser.errors.InvalidStatementError;
 import parser.errors.TypeError;
 import parser.errors.VariableError;
 
+/**
+ * This is the main parser class. It has some instance variables, but this whole
+ * program is really designed to process one Judo file in its lifetime, there's
+ * too must static state that breaks subsequent runs.
+ */
 public class Parser {
 
     private static final String COMMENT_SYMBOL = "?";
@@ -76,8 +81,13 @@ public class Parser {
     private String whitespace;
     private String wsEnglishName;
 
-    //TODO: consider adding instance variable which is current Line
-
+    /**
+     * Ingests the Judo file at the given filename. The file is broken down
+     * line-by-line, which means no single valid statement spans more than one line,
+     * including array literals. No actual Java code is produced until one of the
+     * Parse methods is called.
+     * @param filename The path to the Judo file to translate to java.
+     */
     public Parser(String filename) {
         this.whitespace = this.wsEnglishName = "";
         lines = new ArrayList<>();
@@ -101,8 +111,7 @@ public class Parser {
                 ) {
                     /*
                      * This finds the first instance of leading whitespace (that isn't a comment)
-                     * and remembers it as this file's base unit of whitespace. Potential issues
-                     * if we allow array declarations to be on multiple lines.
+                     * and remembers it as this file's base unit of whitespace.
                      */
                     this.whitespace = wsm.group(1); //leading whitespace
                     if (stringIsHeterogeneous(this.whitespace)) {
@@ -132,6 +141,8 @@ public class Parser {
 
     /**
      * Testing constructor
+     * @param whitespace characters to use as the "file"'s whitespace
+     * @param lines Lines representing the "file".
      */
     public Parser(String whitespace, String... lines) {
         this.whitespace = whitespace;
@@ -143,20 +154,28 @@ public class Parser {
         }
     }
 
-    private boolean stringIsHeterogeneous(String s) {
-        if (s.isEmpty()) return false;
-        char toMatch = s.charAt(0);
-        for (char c : s.toCharArray()) {
-            if (c != toMatch) return true;
-        }
-        return false;
-    }
-
-    //this method basically only exists for unit testing purposes
+    /**
+     * this method basically only exists for unit testing purposes.
+     * @param ws A specific whitespace character to use.
+     * @return The number of indents counted.
+     */
     public int countIndents(CharSequence ws) {
         return countIndents(ws, -1);
     }
 
+    /**
+     * Counts the number of indents at the beginning of line. Uses the class's
+     * whitespace instance variable which is determined in the constructor based
+     * on the Judo file. Will throw an IndentationError if the whitespace is
+     * found to contain a mix of tabs and spaces or a whitespace character that
+     * differs from that in the whitespace instance variable. Also throws an
+     * IndentationError if the number of whitespace characters isn't in line
+     * with the expected amount, i.e. a line indented with 6 spaces in a file
+     * that uses 4 spaces.
+     * @param line The line whose leading whitespace to use.
+     * @param ln The line's line number.
+     * @return The number of indents counted.
+     */
     public int countIndents(CharSequence line, int ln) {
         Matcher m = armMatcher(WS_SPLIT, line);
         String ws = m.group("whitespace");
@@ -177,11 +196,14 @@ public class Parser {
         return ws.length() / whitespace.length();
     }
 
-    public String parseTesting(String className) {
-        return this.parse(className, true);
-    }
-
-    //eventually will probably write to disk right here
+    /**
+     * Using the already ingested Judo file (from the constructor), attempts to
+     * create an entire legal Java file and return it as a string for the
+     * consumer to do with as they please.
+     * @param className The classname to give the new Java file.
+     * @return An entire legal Java file, translated from the Judo file whose
+     * path was provided in the constructor.
+     */
     public String parseFull(String className) {
         return parse(className, false);
     }
@@ -205,17 +227,141 @@ public class Parser {
         return java.toString();
     }
 
+    /**
+     * This has to be done to set internal state of the matcher to be ready
+     * to do things like query the groups. Thanks OOP.
+     * This method makes no guarantees that the returned matcher actually
+     * matches toMatch.
+     * @param toUse The pattern from which to generate the matcher.
+     * @param toMatch The string to match against.
+     * @return A matcher which is "armed", that is, ready to have its groups
+     * queried.
+     */
+    public Matcher armMatcher(Pattern toUse, CharSequence toMatch) {
+        Matcher m = toUse.matcher(toMatch);
+        m.matches();
+        return m;
+    }
+
+    /**
+     * Given a matching matcher from pattern RAY_INIT, returns the type of the
+     * ray being initialized. RAY_INIT allows users to create a type ray of an
+     * arbitrary size with the syntax
+     * <pre>
+let arr = i{100}
+     * </pre>
+     * Which would initialize an int array of size 100.
+     * @param initMatcher An armed and matching matcher of the RAY_INIT pattern.
+     * @return The appropriate type for this ray.
+     */
+    private Type initMatcherType(Matcher initMatcher) {
+        switch (initMatcher.group("type")) {
+            case "i":
+                return Type.INT_LIST;
+            case "b":
+                return Type.BOOL_LIST;
+            default:
+                return Type.STRING_LIST;
+        }
+    }
+
+    /**
+     * Validates the given expression under the grammar pertaining to expected.
+     * Will throw IllegalArgumentException if expected is a ray type. Uses
+     * the throwing version of validation.
+     * @param expression A scalar type, i.e. INT, BOOL, or STRING
+     * @param expected The type expression is expected to validate as.
+     */
+    private void validateByScalarType(CharSequence expression, Type expected) {
+        if (expected.isRayType()) {
+            throw new IllegalArgumentException("Only use this function with scalar types");
+        } else {
+            typeToGrammar(expected).validate(expression);
+        }
+    }
+
+    /**
+     * Returns the Grammar pertaining to the given type
+     * @param t The type of the grammar to fetch
+     * @return Math, Bool, or String grammar for scalar t's, or a RayGrammar
+     * for anything else.
+     */
+    private Grammar typeToGrammar(Type t) {
+        switch (t) {
+            case INT:
+                return MATH_GRAMMAR;
+            case BOOL:
+                return BOOL_GRAMMAR;
+            case STRING:
+                return STRING_GRAMMAR;
+            default:
+                return RAY_GRAMMAR;
+        }
+    }
+
+    /**
+     * Intelligently replaces all necessary replacements for Java legality.
+     * Should be done just before being appended to the Java StringBuilder,
+     * because the result of these replacements will no longer be valid Judo.
+     * @param expression The expression to replace in.
+     * @param t The type of expression.
+     * @return expression with the necessary replacements made, which may
+     * actually be none at all. For example strings don't need any replacements
+     * done.
+     */
+    private String finalReplacements(CharSequence expression, Type t) {
+        String trimmed = expression.toString().trim();
+        String res = null;
+        if (t == null) {
+            res = trimmed;
+        } else if (t.isRayType()) {
+            //if the given expression is an array, split it by comma and run the
+            //replacer on each scalar element.
+            Matcher m = RAY_EXTRACTOR.matcher(trimmed);
+            if (m.matches()) {
+                String[] els = m.group("innerRay").split(",");
+                StringBuilder sb = new StringBuilder("{");
+                for (int i = 0; i < els.length; i++) {
+                    sb.append(finalReplacements(els[i], t.listOf));
+                    if (i < els.length - 1) {
+                        sb.append(",");
+                    }
+                }
+                res = sb.append("}").toString();
+            }
+        } else if (t != Type.STRING) {
+            //strings require no replacements
+            Grammar g = typeToGrammar(t);
+            res = g.keywordsToJava(trimmed);
+        }
+        return res == null ? trimmed : res;
+    }
+
+    /**
+     * Parses an entire block of Judo starting at the index lineStart.
+     * @param lineStart The first line of the block to parse in the instance
+     *                  variable lines.
+     * @param scopes The ScopeStack to query and modify as the block is parsed
+     *               and translated.
+     * @param java The ongoing Java document which is appended to by the various
+     *             handle* functions, all of which are called from in here.
+     * @param currWhitespace The current amount of whitespace to put before each
+     *                       line of Java. This doesn't work perfectly, but it's
+     *                       a little better than zero indentation.
+     * @return The total number of lines that were parsed as a result of this
+     * call, including all recursive calls.
+     */
     public int parseBlock(
-        int lineStart,
-        ScopeStack scopes,
-        StringBuilder java,
-        String currWhitespace
+            int lineStart,
+            ScopeStack scopes,
+            StringBuilder java,
+            String currWhitespace
     ) {
         java.append("{\n");
         boolean ifOpen = false;
         int linesParsed = 0;
         for (int i = lineStart; i < lines.size(); i++) {
-            int currDepth = scopes.size() - 1; //-1 because scope includes the global scope of argos
+            int currDepth = scopes.size() - 1; //-1 because scopes includes the global scope of argos
             Line lineObj = lines.get(i);
             if (countIndents(lineObj.judo) < currDepth) {
                 break;
@@ -288,14 +434,17 @@ public class Parser {
         return linesParsed;
     }
 
-    public Matcher armMatcher(Pattern toUse, CharSequence toMatch) {
-        Matcher m = toUse.matcher(toMatch);
-        m.matches();
-        //this has to be done to set internal state of the matcher to be ready
-        //to do things like query the groups. Thanks OOP.
-        return m;
-    }
-
+    /**
+     * Handles the assignment, and thus creation, of a new variable. This
+     * statement always begins with a "let", and the type of the value is
+     * inferred based on various things. If it is a variable, it takes on the
+     * type of that variable. If it is an expression, Grammars are tried on it
+     * until one validates. The type connected to the variable here cannot be
+     * changed.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleAssignment(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(ASSIGN_STMT, line.judo);
         String varName = m.group("var");
@@ -358,65 +507,16 @@ public class Parser {
             .append(";\n");
     }
 
-    private Type initMatcherType(Matcher initMatcher) {
-        switch (initMatcher.group("type")) {
-            case "i":
-                return Type.INT_LIST;
-            case "b":
-                return Type.BOOL_LIST;
-            default:
-                return Type.STRING_LIST;
-        }
-    }
-
-    private void validateByScalarType(CharSequence expression, Type expected) {
-        if (expected.isRayType()) {
-            throw new IllegalArgumentException("Only use this function for scalar types");
-        } else {
-            typeToGrammar(expected).validate(expression);
-        }
-    }
-
-    private Grammar typeToGrammar(Type t) {
-        switch (t) {
-            case INT:
-                return MATH_GRAMMAR;
-            case BOOL:
-                return BOOL_GRAMMAR;
-            case STRING:
-                return STRING_GRAMMAR;
-            default:
-                return RAY_GRAMMAR;
-        }
-    }
-
-    private String finalReplacements(CharSequence expression, Type t) {
-        String trimmed = expression.toString().trim();
-        String res = null;
-        if (t == null) {
-            res = trimmed;
-        } else if (t.isRayType()) {
-            //if the given expression is an array, split it by comma and
-            //run the replacer on each scalar element.
-            Matcher m = RAY_EXTRACTOR.matcher(trimmed);
-            if (m.matches()) {
-                String[] els = m.group("innerRay").split(",");
-                StringBuilder sb = new StringBuilder("{");
-                for (int i = 0; i < els.length; i++) {
-                    sb.append(finalReplacements(els[i], t.listOf));
-                    if (i < els.length - 1) {
-                        sb.append(",");
-                    }
-                }
-                res = sb.append("}").toString();
-            }
-        } else {
-            Grammar g = typeToGrammar(t);
-            res = g.keywordsToJava(trimmed);
-        }
-        return res == null ? trimmed : res;
-    }
-
+    /**
+     * Handles the reassignment of variables. This is different from assignment
+     * in that it does not begin with the keyword let. If the variable being
+     * reassigned didn't already exist, a VariableError will be thrown. Also,
+     * the value being assigned to the variable must be of the same type as the
+     * variable was originally.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleReassignment(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(REASSIGN_STMT, line.judo);
         String varName = m.group("var");
@@ -490,6 +590,17 @@ public class Parser {
             .append(";\n");
     }
 
+    /**
+     * handles our if statement, which is
+     * <pre>
+if condition:
+     do stuff
+     * </pre>
+     * As with all conditionals, the condition does not have to be in parentheses.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleIf(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(IF_STMT, line.judo);
         String condition = m.group("condition");
@@ -498,6 +609,19 @@ public class Parser {
         java.append("if (").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
+    /**
+     * Handles our elf statement, which is
+     * <pre>
+efl condition:
+     do stuff
+     * </pre>
+     * We went with one word because our language is whitespace sensitive, and
+     * also because we thought elf is funny. There must be an if statement already
+     * "open" for an elf statement to be valid.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleElf(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(ELF_STMT, line.judo);
         String condition = m.group("condition");
@@ -506,13 +630,29 @@ public class Parser {
         java.append("else if (").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
+    /**
+     * Handles our else statement. There must be an if statement already "open"
+     * for an else statement to be valid.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleElse(Line line, StringBuilder java, ScopeStack scopes) {
         scopes.pushNewScope();
         java.append("else ");
     }
 
-    // Handling: Judo: for loopVar in lo:hi[step]
-    //           Java: for(type loopVar = lo; lo<=hi; loopVar+=step)
+    /**
+     * Handles our for range loop, which is
+     * <pre>
+for i in 1..10:
+     do stuff
+     * </pre>
+     * Which translates to a normal for loop in Java.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleForRange(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(FORRANGE_STMT, line.judo);
         String loopVar = m.group("loopVar");
@@ -524,13 +664,6 @@ public class Parser {
         MATH_GRAMMAR.validate(lo);
         MATH_GRAMMAR.validate(hi);
 
-        //        int hi;
-        //        try {
-        //            hi = Integer.parseInt(m.group("hi"));
-        //        } catch (NumberFormatException e) {
-        //            throw new InvalidStatementError("Bad high value in range in for-loop");
-        //        }
-
         String stepString = m.group("step");
         int step = 1;
         if (stepString != null) {
@@ -540,7 +673,6 @@ public class Parser {
                 throw new InvalidStatementError("Bad step value in for-loop");
             }
         }
-
         //for(int loopVar = lo; lo < hi; loopVar+=step;){
         java
             .append("for(int ")
@@ -558,8 +690,17 @@ public class Parser {
             .append(") ");
     }
 
-    //Handling: Judo: for(loopVar : iterable)
-    //          Java: for(type loopVar : iterable)
+    /**
+     * Handles our for each statement, which is
+     * <pre>
+for element in array:
+     do stuff
+     * </pre>
+     * which translates to Java's "enhanced" for loop.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleForEach(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(FOREACH_STMT, line.judo);
         String loopVar = m.group("loopVar");
@@ -576,6 +717,16 @@ public class Parser {
             .append(")");
     }
 
+    /**
+     * Handles our loop statement, which is
+     * <pre>
+loop condition:
+     do stuff
+     * </pre>
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleLoop(Line line, StringBuilder java, ScopeStack scopes) {
         scopes.pushNewScope();
         Matcher m = armMatcher(LOOP_STMT, line.judo);
@@ -584,6 +735,18 @@ public class Parser {
         java.append("while(").append(finalReplacements(condition, Type.BOOL)).append(") ");
     }
 
+    /**
+     * Handles our print statements, which are
+     * <pre>
+out(expr)
+outln(expr)
+     * </pre>
+     * out() prints the given expression, and outln() does the same but followed
+     * by a newline.
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handlePrint(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(PRINT_STMT, line.judo);
         String arg = m.group("argument");
@@ -619,6 +782,15 @@ public class Parser {
             .append(");\n");
     }
 
+    /**
+     * Handles assignment to rays by index, i.e:
+     * <pre>
+list[2] = 10
+     * </pre>
+     * @param line The line to process.
+     * @param java The ongoing Java file to append translated java to.
+     * @param scopes The ScopeStack representing current variables.
+     */
     public void handleRayIndexAssignment(Line line, StringBuilder java, ScopeStack scopes) {
         Matcher m = armMatcher(INDEXER_ASSIGN, line.judo);
         String rayName = m.group("var");
@@ -643,6 +815,27 @@ public class Parser {
             .append(";");
     }
 
+    /**
+     * Checks if the given string contains more than type of character. Used for
+     * making sure tabs and spaces aren't mixed.
+     * @param s The string to check
+     * @return Whether the given string contains more than one type of character.
+     */
+    private boolean stringIsHeterogeneous(String s) {
+        if (s.isEmpty()) return false;
+        char toMatch = s.charAt(0);
+        for (char c : s.toCharArray()) {
+            if (c != toMatch) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Simple dataclass representing a line in the original Judo file, including
+     * its line number in that file. This is necessary for descriptive error
+     * messages because the index into the lines array is not necessary the
+     * original line number because blank lines are dropped.
+     */
     private static class Line {
 
         final StringBuilder judo;
@@ -651,11 +844,6 @@ public class Parser {
         public Line(CharSequence code, int lineNum) {
             this.judo = new StringBuilder(code);
             this.lineNum = lineNum;
-        }
-
-        public Line(Line other) {
-            this.judo = new StringBuilder(other.judo);
-            this.lineNum = other.lineNum;
         }
 
         public Line trimmedCopy() {
