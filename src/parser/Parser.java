@@ -187,7 +187,7 @@ public class Parser {
     }
 
     private String parse(String className, boolean testing) {
-        ScopeStack scopes = new ScopeStack(testing);
+        ScopeStack scopes = new ScopeStack();
         VarRule.useScopes(scopes); //not proud of this
         Map<String, Variable> defaultScope = new HashMap<>(1);
         defaultScope.put("argos", ARGOS);
