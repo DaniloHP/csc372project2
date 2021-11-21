@@ -9,8 +9,13 @@ import parser.Parser;
 
 public class Translator {
 
+    /**
+     * Entrypoint to the parser. The output java file will be put into a file
+     * with the same name as the input file, but the .java extension.
+     * @param args Should be one path to a judo file to translate.
+     */
     public static void main(String[] args) {
-        if (args.length != 1) {
+        if (args.length < 1) {
             System.err.println("Expected the filename of a Judo file.");
             System.exit(1);
         }

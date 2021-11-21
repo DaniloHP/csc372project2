@@ -6,8 +6,15 @@ import parser.Type;
 
 public class StringGrammar extends Grammar {
 
-    //This very simple grammar allows string literals and variables, no string
-    //concatenation.
+    /**
+     * This very simple grammar allows string literals and variables, no string
+     * concatenation. Uses Java's \p{Print} character class, which matches all
+     * printable ASCII characters, but no unicode or ascii control characters,
+     * including \t and \n.
+     * @param vg The VarGrammar on which all other grammars depend for making
+     *           sure that variables within expressions exist and are of the
+     *           right type.
+     */
     public StringGrammar(VarGrammar vg) {
         super();
         Rule strLiteralRule = new Rule("\\\"[\\p{Print}&&[^\\\"]]*?\\\"", "STR_LITERAL");

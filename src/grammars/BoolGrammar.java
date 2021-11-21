@@ -8,8 +8,17 @@ import parser.Type;
 public class BoolGrammar extends Grammar {
 
     /**
-     * BooleanGrammar depends on MathGrammar for comparisons, so it's entrypoint
-     * *must* be provided.
+     * Constructs a boolean grammar as so:
+     * <or_expr>   ::= <or_expr> or <and_expr> | <and_expr>
+     * <and_expr>  ::= <and_expr> and <not_expr> | <not_expr>
+     * <not_expr>  ::= not <bool_root> | <bool_root> | <comparison>
+     * <bool_root> ::= <boolean> | (<or_expr>)
+     * <boolean>   ::= T | F
+     * @param mg MathGrammar which the boolean grammar depends on for arbitrary
+     *           comparisons.
+     * @param vg The VarGrammar on which all other grammars depend for making
+     *           sure that variables within expressions exist and are of the
+     *           right type.
      */
     public BoolGrammar(MathGrammar mg, VarGrammar vg) {
         super();

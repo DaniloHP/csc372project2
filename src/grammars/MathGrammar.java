@@ -7,6 +7,15 @@ import parser.Type;
 
 public class MathGrammar extends Grammar {
 
+    /**
+     * Builds a MathGrammar as so:
+     * <expr>     ::= <expr> + <mmd_expr> | <expr> - <mmd_expr> | <mmd_expr>
+     * <mmd_expr> ::= <mmd_expr>*<root> | <mmd_expr>/<root> |                    <mmd_expr> mod <root> | <root>
+     * <root>     ::= <integer> | <var> | (<expr>) | -<expr>
+     * @param vg The VarGrammar on which all other grammars depend for making
+     *           sure that variables within expressions exist and are of the
+     *           right type.
+     */
     public MathGrammar(VarGrammar vg) {
         super();
         // <as_expr>

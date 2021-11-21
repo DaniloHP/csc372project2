@@ -62,7 +62,7 @@ public class Parser {
     private static final Pattern PASS_STMT = Pattern.compile("[ \\t]*hallpass[ \\t]*");
 
     public static final Variable ARGOS = new Variable("argos", Type.INT_LIST);
-    private static final VarGrammar VAR_GRAMMAR = new VarGrammar(null);
+    private static final VarGrammar VAR_GRAMMAR = new VarGrammar();
     private static final StringGrammar STRING_GRAMMAR = new StringGrammar(VAR_GRAMMAR);
     private static final MathGrammar MATH_GRAMMAR = new MathGrammar(VAR_GRAMMAR);
     private static final BoolGrammar BOOL_GRAMMAR = new BoolGrammar(MATH_GRAMMAR, VAR_GRAMMAR);
