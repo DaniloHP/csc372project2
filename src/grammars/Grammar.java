@@ -20,7 +20,8 @@ public abstract class Grammar {
     }
 
     /**
-     * Validates the given expression under this grammar.
+     * Validates the given expression under this grammar. As soon as ANY rule
+     * fully validates toCheck, we return true.
      * @param toCheck The expression to validate.
      * @return true if the given sequence is valid under the specific Grammar
      * this method was called under, false otherwise. This method is very likely

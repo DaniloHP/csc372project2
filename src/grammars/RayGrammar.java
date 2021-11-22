@@ -10,6 +10,18 @@ import parser.Type;
 import parser.errors.InvalidStatementError;
 import parser.errors.TypeError;
 
+/**
+ * Our ray (array) grammar:
+ * <pre>
+ &lt;ray&gt;         ::= [&lt;int_list&gt;]  |  [&lt;string_list&gt;]  |  [&lt;bool_list&gt;]
+ &lt;int_list&gt;    ::= &lt;integer&gt;,&lt;int_list&gt;  |  &lt;var&gt;,&lt;int_list&gt;  |  &lt;integer&gt;  |  &lt;var&gt;
+ &lt;string_list&gt; ::= &lt;string_literal&gt;,&lt;string_list&gt;  |  &lt;var&gt;,&lt;string_list&gt;  |  &lt;string_literal&gt;  |  &lt;var&gt;
+ &lt;bool_list&gt;   ::= &lt;bool&gt;,&lt;bool_list&gt;  |  &lt;var&gt;,&lt;bool_list&gt;  |  &lt;bool&gt; | &lt;var&gt;
+ * </pre>
+ * The above lines will render correctly in a browser (JavaDoc), but look
+ * terrible in source code. See this Grammar's constructor for a more readable
+ * grammar in source code.
+ */
 public class RayGrammar extends Grammar {
 
     private final Pattern rayUnwrap;

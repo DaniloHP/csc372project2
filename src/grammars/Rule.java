@@ -93,25 +93,36 @@ public class Rule {
     }
 
     /**
-     * In many ways, the heart of the grammar. Recursively makes sure that all
+     * In some ways, the heart of the grammar. Recursively makes sure that all
      * of this rule's children validate, all the way down to a terminal.
      * @param toCheck The expression to validate.
      * @return Whether the given expression is valid.
      */
     public boolean validate(CharSequence toCheck) {
         Matcher matcher = regex.matcher(toCheck);
+        //empty strings are immediate failures, and we have to actually check
+        //that if it's not empty, it matches this Rule's regex.
         if (toCheck.length() > 0 && matcher.matches()) {
             if (this.isTerminal()) {
-                //it's a matching terminal
+                //it's a matching terminal, recursion stops here.
                 return true;
             }
+            //result vector represents the validity of each part of this
+            //rule.
             boolean[] resultVector = new boolean[children.size()];
             int i = 0;
-            for (String k : children.keySet()) {
-                String currGroup = matcher.group(k).trim();
-                for (Rule rule : children.get(k)) {
+            //Children is a mapping of groupNames -> List<Rules>
+            //in other words, it describes what parts of the expression
+            //have to validate under what grammar.
+            for (String groupName : children.keySet()) {
+                String currGroup = matcher.group(groupName).trim();
+                for (Rule rule : children.get(groupName)) {
+                    //recursive call to make sure all children of a group are
+                    //valid.
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
+                        //returning false or breaking if this if-statement is
+                        //false breaks everything.
                     }
                     //I'm not worried about the performance implications of calling
                     //allTrue every iteration because resultVector is at most len 2
@@ -127,34 +138,43 @@ public class Rule {
 
     /**
      * Makes any replacements in the given expression specified in the
-     * replacements member.
+     * replacements member. This function has many similarities to validate(),
+     * and with better foresight they probably would have been the same function
+     * from the beginning.
+     * Most Rules don't have replacements to make because our grammar is largely
+     * compatible with Java. Such rules have {@code this.replacements = null},
+     * which is why I have to check that. The existence of a non-null
+     * replacements instance variable also implies that the Rule's Pattern
+     * includes a group called replaceMe which includes the offending symbol,
+     * for example {@code mod}, which has to be replaced with {@code %} for Java.
      * @param toReplace The expression to do replacements in
      * @return The expression, with necessary replacements made, or null if this
      * Rule didn't match the expression.
      */
     public String replace(CharSequence toReplace) {
         Matcher matcher = regex.matcher(toReplace);
+        String sToReplace = toReplace.toString();
         if (toReplace.length() > 0 && matcher.matches()) {
             if (this.isTerminal()) {
-                //TODO: clean this up
-                if (
-                    this.replacements != null && this.replacements.containsKey(toReplace.toString())
-                ) {
-                    return this.replacements.get(toReplace.toString());
+                if (replacements != null && replacements.containsKey(sToReplace)) {
+                    return this.replacements.get(sToReplace);
                 }
-                return toReplace.toString();
+                return sToReplace;
             }
             int i = 0;
             boolean[] resultVector = new boolean[children.size()];
-            String replacedCopy = toReplace.toString();
+            String replacedCopy = sToReplace;
             for (String groupName : children.keySet()) {
                 String currGroup = matcher.group(groupName).trim();
-                toReplace = replacedCopy;
+                sToReplace = replacedCopy;
                 for (Rule rule : children.get(groupName)) {
                     String childReplaced = rule.replace(currGroup);
                     if (childReplaced != null) {
-                        replacedCopy =
-                            replaceGroupName(toReplace.toString(), groupName, childReplaced);
+                        //!= null means essentially the same thing as if the
+                        //child validated, so we need to replace the previous
+                        //group containing the child with the new one, which
+                        //may or may not be different due to replacements made.
+                        replacedCopy = replaceGroupName(sToReplace, groupName, childReplaced);
                         resultVector[i] = true;
                     }
                     if (allTrue(resultVector)) {
@@ -164,13 +184,19 @@ public class Rule {
                 i++;
             }
             if (this.replacements != null) {
+                //finally, this is where NON-terminals make their replacements.
+                //This applies to ones such as the and, or, and mod rules.
                 String group = matcher.group("replaceMe").trim();
                 if (this.replacements.containsKey(group)) {
+                    //replace the replaceMe group with whatever we're supposed to
+                    //replace it with according to our replacements map.
                     replacedCopy =
                         replaceGroupName(replacedCopy, "replaceMe", this.replacements.get(group));
                 }
             }
             return allTrue(resultVector) ? replacedCopy : null;
+            //if all children didn't validate, we don't want our replacements
+            //to be reflected farther up the recursion tree, so we return null.
         }
         return null;
     }

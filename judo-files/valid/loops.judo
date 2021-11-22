@@ -2,6 +2,8 @@ for i in 1..10:
     hallpass
 for i in 1..10[2]:
     hallpass
+for i in 1..10[2 +2 * 3 - 1]:
+    hallpass
 let array = [1,2,3,4]
 for i in array:
     hallpass

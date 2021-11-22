@@ -109,11 +109,9 @@ public class Parser {
                     !wsm.group("rest").startsWith(COMMENT_SYMBOL) &&
                     this.whitespace.isEmpty()
                 ) {
-                    /*
-                     * This finds the first instance of leading whitespace (that isn't a comment)
-                     * and remembers it as this file's base unit of whitespace.
-                     */
-                    this.whitespace = wsm.group(1); //leading whitespace
+                    //This finds the first instance of leading whitespace (that isn't a comment)
+                    //and remembers it as this file's base unit of whitespace.
+                    this.whitespace = wsm.group("whitespace"); //leading whitespace
                     if (stringIsHeterogeneous(this.whitespace)) {
                         throw new IndentationError("Invalid mixing of tabs and spaces", lineNum);
                     }
@@ -122,10 +120,11 @@ public class Parser {
                     String plural = numChars == 1 ? "" : "s";
                     this.wsEnglishName = String.format("%d %s%s", numChars, charInUse, plural);
                     //result will be something like "1 tab", "4 spaces", etc.
+                    //This is for error messages.
                 }
                 int index = sb.indexOf(COMMENT_SYMBOL);
                 if (index > 0) {
-                    sb.setLength(index); //cut off comments
+                    sb.setLength(index); //cut off comments entirely
                     sb.trimToSize();
                 }
                 lines.add(new Line(sb, lineNum));
@@ -205,10 +204,6 @@ public class Parser {
      * path was provided in the constructor.
      */
     public String parseFull(String className) {
-        return parse(className, false);
-    }
-
-    private String parse(String className, boolean testing) {
         ScopeStack scopes = new ScopeStack();
         VarRule.useScopes(scopes); //not proud of this
         Map<String, Variable> defaultScope = new HashMap<>(1);
@@ -216,12 +211,12 @@ public class Parser {
         scopes.push(defaultScope);
         StringBuilder java = new StringBuilder();
         java
-            .append("// GENERATED: ")
-            .append(LocalDateTime.now())
-            .append("\n")
-            .append("public class ")
-            .append(className)
-            .append(" {\npublic static void main(String[] argos) ");
+                .append("// GENERATED: ")
+                .append(LocalDateTime.now()) //timestamp
+                .append("\n")
+                .append("public class ")
+                .append(className)
+                .append(" {\npublic static void main(String[] argos) ");
         parseBlock(0, scopes, java, this.whitespace);
         java.append("}"); //closes class {
         return java.toString();
@@ -229,9 +224,8 @@ public class Parser {
 
     /**
      * This has to be done to set internal state of the matcher to be ready
-     * to do things like query the groups. Thanks OOP.
-     * This method makes no guarantees that the returned matcher actually
-     * matches toMatch.
+     * to do things like query the groups. Thanks OOP. This method makes no
+     * guarantees that the returned matcher actually matches toMatch.
      * @param toUse The pattern from which to generate the matcher.
      * @param toMatch The string to match against.
      * @return A matcher which is "armed", that is, ready to have its groups
@@ -274,6 +268,8 @@ let arr = i{100}
      */
     private void validateByScalarType(CharSequence expression, Type expected) {
         if (expected.isRayType()) {
+            //The RayGrammar's .validate() method doesn't really supply satisfactory
+            //validation because it doesn't check types.
             throw new IllegalArgumentException("Only use this function with scalar types");
         } else {
             typeToGrammar(expected).validate(expression);
@@ -352,18 +348,20 @@ let arr = i{100}
      * call, including all recursive calls.
      */
     public int parseBlock(
-            int lineStart,
-            ScopeStack scopes,
-            StringBuilder java,
-            String currWhitespace
+        int lineStart,
+        ScopeStack scopes,
+        StringBuilder java,
+        String currWhitespace
     ) {
-        java.append("{\n");
+        java.append("{\n"); //open the block with a {
         boolean ifOpen = false;
         int linesParsed = 0;
         for (int i = lineStart; i < lines.size(); i++) {
             int currDepth = scopes.size() - 1; //-1 because scopes includes the global scope of argos
             Line lineObj = lines.get(i);
             if (countIndents(lineObj.judo) < currDepth) {
+                //this indicates that the current block is over because we went
+                //up by an indentation level.
                 break;
             }
             linesParsed++;
@@ -430,7 +428,7 @@ let arr = i{100}
             }
         }
         scopes.pop();
-        java.append(currWhitespace).append("}\n");
+        java.append(currWhitespace).append("}\n"); //close the block with a }
         return linesParsed;
     }
 
@@ -458,20 +456,26 @@ let arr = i{100}
         }
         Type t;
         if (MATH_GRAMMAR.validateNoThrow(value)) {
+            //int literal expression or variable
             curScope.put(varName, new Variable(varName, Type.INT));
             t = Type.INT;
         } else if (BOOL_GRAMMAR.validateNoThrow(value)) {
+            //boolean literal expression or variable
             curScope.put(varName, new Variable(varName, Type.BOOL));
             t = Type.BOOL;
         } else if (STRING_GRAMMAR.validateNoThrow(value)) {
+            //string literal expression or variable
             curScope.put(varName, new Variable(varName, Type.STRING));
             t = Type.STRING;
         } else if (RAY_GRAMMAR.validateNoThrow(value)) {
+            //array literal expression or variable
             t = RAY_GRAMMAR.categorizeNoThrow(value);
             curScope.put(varName, new Variable(varName, t));
         } else if (INDEXER_ACCESS.matcher(value).matches()) {
+            //Assigning FROM an array, i.e. let b = arr[10]
             Matcher indexer = armMatcher(INDEXER_ACCESS, value);
             String rayName = indexer.group("var");
+            //the variable being indexed
             Variable ray = scopes.find(rayName);
             if (!ray.type.isRayType()) {
                 throw new TypeError(
@@ -479,12 +483,14 @@ let arr = i{100}
                     line.lineNum
                 );
             } else if (ray.equals(ARGOS)) {
+                //special treatment for argos, our alias for the program args
                 value = format("Integer.parseInt({0})", value);
             }
             t = ray.type.listOf;
             validateByScalarType(indexer.group("index"), t);
             curScope.put(varName, new Variable(varName, t));
         } else if (RAY_INIT.matcher(value).matches()) {
+            //ray initiation using the syntax: let a = i{N}
             Matcher rayInit = armMatcher(RAY_INIT, value);
             t = initMatcherType(rayInit);
             String n = rayInit.group("n");
@@ -521,7 +527,7 @@ let arr = i{100}
         Matcher m = armMatcher(REASSIGN_STMT, line.judo);
         String varName = m.group("var");
         String value = m.group("rValue");
-        Variable var = scopes.find(varName);
+        Variable toReassign = scopes.find(varName);
         boolean passed;
         String arrayReinit = "";
         Matcher indexer = INDEXER_ACCESS.matcher(value);
@@ -541,12 +547,12 @@ let arr = i{100}
         } else if (RAY_INIT.matcher(value).matches()) {
             Matcher rayInit = armMatcher(RAY_INIT, value);
             Type t = initMatcherType(rayInit);
-            if (var.type != t) {
+            if (toReassign.type != t) {
                 throw new TypeError(
                     format(
                         "Variable `{0}` was expected to be of type {1}, but found {2}",
                         varName,
-                        var.type.javaType,
+                        toReassign.type.javaType,
                         t.javaType
                     ),
                     line.lineNum
@@ -557,7 +563,8 @@ let arr = i{100}
             value = format("new {0}[{1}]", t.listOf.javaType, n);
             passed = true;
         } else {
-            switch (var.type) {
+            //switch on the type of the variable being reassigned.
+            switch (toReassign.type) {
                 case INT:
                     passed = MATH_GRAMMAR.validateNoThrow(value);
                     break;
@@ -568,8 +575,8 @@ let arr = i{100}
                     passed = STRING_GRAMMAR.validateNoThrow(value);
                     break;
                 default: //one of the list types
-                    passed = RAY_GRAMMAR.categorize(value) == var.type;
-                    arrayReinit = format("new {0}[]", var.type.listOf.javaType);
+                    passed = RAY_GRAMMAR.categorize(value) == toReassign.type;
+                    arrayReinit = format("new {0}[]", toReassign.type.listOf.javaType);
             }
         }
         if (!passed) {
@@ -577,7 +584,7 @@ let arr = i{100}
                 format(
                     "Variable `{0}` was previously assigned type {1}",
                     varName,
-                    var.type.javaType
+                    toReassign.type.javaType
                 ),
                 line.lineNum
             );
@@ -586,7 +593,7 @@ let arr = i{100}
             .append(varName)
             .append(" = ")
             .append(arrayReinit)
-            .append(finalReplacements(value, var.type))
+            .append(finalReplacements(value, toReassign.type))
             .append(";\n");
     }
 
@@ -659,21 +666,18 @@ for i in 1..10:
         scopes.pushNewScope();
         scopes.addToCurrScope(loopVar, new Variable(loopVar, Type.INT));
 
+        //Groups are as follows: for (int loopVar = lo; lo < hi; loopVar+=step)
         String lo = m.group("lo");
         String hi = m.group("hi");
         MATH_GRAMMAR.validate(lo);
         MATH_GRAMMAR.validate(hi);
 
-        String stepString = m.group("step");
-        int step = 1;
-        if (stepString != null) {
-            try {
-                step = Integer.parseInt(m.group("step"));
-            } catch (NumberFormatException e) {
-                throw new InvalidStatementError("Bad step value in for-loop");
-            }
+        String stepGroup = m.group("step");
+        String step = "1";
+        //step is optional and defaults to 1. null if not included.
+        if (stepGroup != null && MATH_GRAMMAR.validate(stepGroup)) {
+            step = stepGroup;
         }
-        //for(int loopVar = lo; lo < hi; loopVar+=step;){
         java
             .append("for(int ")
             .append(loopVar)
@@ -846,8 +850,12 @@ list[2] = 10
             this.lineNum = lineNum;
         }
 
+        /**
+         * @return A copy of this line, but with the Judo code being trimmed on
+         * both sides. Same line number.
+         */
         public Line trimmedCopy() {
-            StringBuilder sb = new StringBuilder(judo.toString().trim());
+            String sb = judo.toString().trim();
             return new Line(sb, lineNum);
         }
 

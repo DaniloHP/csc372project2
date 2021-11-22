@@ -5,6 +5,19 @@ import java.util.Arrays;
 import java.util.List;
 import parser.Type;
 
+/**
+ * Our boolean grammar:
+ * <pre>
+ &lt;or_expr&gt;   ::= &lt;or_expr&gt; or &lt;and_expr&gt; | &lt;and_expr&gt;
+ &lt;and_expr&gt;  ::= &lt;and_expr&gt; and &lt;not_expr&gt; | &lt;not_expr&gt;
+ &lt;not_expr&gt;  ::= not &lt;bool_root&gt; | &lt;bool_root&gt; | &lt;comparison&gt;
+ &lt;bool_root&gt; ::= &lt;boolean&gt; | (&lt;or_expr&gt;)
+ &lt;boolean&gt;   ::= T | F
+ * </pre>
+ * The above lines will render correctly in a browser (JavaDoc), but look
+ * terrible in source code. See this Grammar's constructor for a more readable
+ * grammar in source code.
+ */
 public class BoolGrammar extends Grammar {
 
     /**

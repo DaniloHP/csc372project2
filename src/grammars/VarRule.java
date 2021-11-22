@@ -89,8 +89,9 @@ public class VarRule extends Rule {
 
     /**
      * Equips all VarRules (this is static) to check for variables in the given
-     * ScopeStack. Until this is called with a non-null ScopeStack, not such
-     * checking can or will be done.
+     * ScopeStack. Until this is called with a non-null ScopeStack, no such
+     * checking can or will be done. This means that the VarRule pulls double
+     * duty of checking for syntactic validity and for semantic validity.
      * @param scopes The ScopeStack to use.
      */
     public static void useScopes(ScopeStack scopes) {
@@ -123,15 +124,10 @@ public class VarRule extends Rule {
      *                    has no expected type.
      * @return Whether the given expression is valid.
      */
-    public boolean validate(
-            CharSequence toCheck,
-            boolean doKWCheck,
-            boolean doTypeCheck
-    ) {
+    public boolean validate(CharSequence toCheck, boolean doKWCheck, boolean doTypeCheck) {
         Matcher m = this.regex.matcher(toCheck);
         if (toCheck.length() > 0 && m.matches()) {
-            String varName = m.group("var");
-            //In this block I check if it's a keyword?
+            String varName = m.group("var"); //the actual variable identifier.
             if (doKWCheck && VarRule.NONVALUE_KEYWORDS.contains(varName)) {
                 //           ^This is to avoid treating T/F as a variable and
                 //getting exceptions because "variable T uses a reserved..."
@@ -139,11 +135,19 @@ public class VarRule extends Rule {
                     format("Variable `{0}` uses a reserved keyword for its name", varName)
                 );
             }
-            if (scopes != null) {
+            //VarRule will work if it doesn't have a ScopeStack, it'll just be
+            //unable to check if variables exist and if they are of the right
+            //type.
+            if (VarRule.scopes != null) {
                 //exists
                 Variable var = BUILTINS_AS_VARIABLES.get(varName);
+                //"T", "F", and "argos" will make their way into this function.
+                //they are variables in that they hold value and are valid for
+                //use in particular situation, so I keep them in this map. If
+                //varName was something else, a user defined variable, var will
+                //be null, and a lookup will be done in the ScopeStack.
                 var = var == null ? scopes.find(varName, true) : var;
-                //is of the expected type
+                //^will throw a VariableException if the variable isn't found
                 if (doTypeCheck && this.expectedType != null && var.type != this.expectedType) {
                     throw new TypeError(
                         format(
@@ -154,7 +158,6 @@ public class VarRule extends Rule {
                     );
                 }
             }
-            //^will throw an exception if the variable isn't found
             return true;
         }
         return false;
@@ -166,6 +169,10 @@ public class VarRule extends Rule {
      */
     @Override
     public String toString() {
-        return format("VarRule {0} ({1})", id, expectedType == null ? "untyped" : expectedType.javaType);
+        return format(
+            "VarRule {0} ({1})",
+            id,
+            expectedType == null ? "untyped" : expectedType.javaType
+        );
     }
 }
