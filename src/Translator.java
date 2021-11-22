@@ -33,6 +33,6 @@ public class Translator {
             System.err.println("Unable to output java file to " + javaFileName);
             System.exit(1);
         }
-        System.out.println(format("Java file successfully outputted to {0}!", javaFileName));
+        System.out.println(format("Java file successfully outputted to:\n{0}", javaFileName));
     }
 }

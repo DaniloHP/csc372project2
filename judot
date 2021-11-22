@@ -1,0 +1,11 @@
+#!/bin/sh
+out=$(java -jar "$1" "$2")
+if [ -z "$out" ]  # If string is empty
+then
+    echo Translation failed
+else
+    javaFile=$(echo "$out" | tail -n 1)
+    y=${javaFile%.java}
+    javaExec=${y##*/}
+    javac "$javaFile" && java "$javaExec" "$3"
+fi

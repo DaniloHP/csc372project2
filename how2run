@@ -1,1 +1,0 @@
-java -jar jar/project2.jar judo-files/required/Program4.txt && javac Program4.java && java Program4 20 && rm Program4.*
