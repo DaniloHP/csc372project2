@@ -211,12 +211,12 @@ public class Parser {
         scopes.push(defaultScope);
         StringBuilder java = new StringBuilder();
         java
-                .append("// GENERATED: ")
-                .append(LocalDateTime.now()) //timestamp
-                .append("\n")
-                .append("public class ")
-                .append(className)
-                .append(" {\npublic static void main(String[] argos) ");
+            .append("// GENERATED: ")
+            .append(LocalDateTime.now()) //timestamp
+            .append("\n")
+            .append("public class ")
+            .append(className)
+            .append(" {\npublic static void main(String[] argos) ");
         parseBlock(0, scopes, java, this.whitespace);
         java.append("}"); //closes class {
         return java.toString();
