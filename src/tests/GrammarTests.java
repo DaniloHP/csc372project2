@@ -40,6 +40,7 @@ public class GrammarTests {
     @Test
     void testMathGrammar() {
         VarRule.checkVarTypes = false;
+        assertTrue(mathGrammar.validate("3 * x + 2"));
         assertTrue(mathGrammar.validate("x"));
         assertTrue(mathGrammar.validate("-1"));
         assertTrue(mathGrammar.validate("(1)"));

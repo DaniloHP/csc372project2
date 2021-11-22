@@ -121,14 +121,18 @@ public class Rule {
                     //valid.
                     if (rule.validate(currGroup)) {
                         resultVector[i] = true;
-                        //returning false or breaking if this if-statement is
-                        //false breaks everything.
+                        //I'm not worried about the performance implications of calling
+                        //allTrue every iteration because resultVector is at most len 2
+                        if (allTrue(resultVector)) {
+                            return true;
+                        }
+                        break;
                     }
-                    //I'm not worried about the performance implications of calling
-                    //allTrue every iteration because resultVector is at most len 2
-                    if (allTrue(resultVector)) {
-                        return true;
-                    }
+                }
+                if (!resultVector[i]) {
+                    //allTrue will never return true if one is false, so we can
+                    //trim this branch now.
+                    return false;
                 }
                 i++;
             }
@@ -180,6 +184,10 @@ public class Rule {
                     if (allTrue(resultVector)) {
                         break;
                     }
+                }
+                if (!resultVector[i]) {
+                    //similar to returning false in validate.
+                    return null;
                 }
                 i++;
             }
