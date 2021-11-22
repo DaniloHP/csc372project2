@@ -1,5 +1,9 @@
 package parser;
 
+/**
+ * Simple dataclass representing a Judo variable. Includes the name, or
+ * identifier, and its type.
+ */
 public class Variable {
 
     public final String identifier;

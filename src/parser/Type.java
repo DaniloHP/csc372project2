@@ -1,5 +1,10 @@
 package parser;
 
+/**
+ * Simple enum representing our types. Has a slightly recursive structure in that
+ * ray/list types point at the Type that they are a list of. Also has the legal
+ * Java type identifier associated with each type.
+ */
 public enum Type {
     INT("int", null),
     BOOL("boolean", null),
@@ -16,10 +21,16 @@ public enum Type {
         this.listOf = listOf;
     }
 
+    /**
+     * @return Whether this type is one of int[], String[], or boolean[]
+     */
     public boolean isRayType() {
         return this.javaType.endsWith("[]");
     }
 
+    /**
+     * @return The Java type identifier
+     */
     public String toString() {
         return this.javaType;
     }
