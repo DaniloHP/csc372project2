@@ -40,6 +40,7 @@ public class GrammarTests {
     @Test
     void testMathGrammar() {
         VarRule.checkVarTypes = false;
+        assertTrue(mathGrammar.validate("3 * x + 2"));
         assertTrue(mathGrammar.validate("x"));
         assertTrue(mathGrammar.validate("-1"));
         assertTrue(mathGrammar.validate("(1)"));
@@ -164,8 +165,8 @@ public class GrammarTests {
         assertFalse(rule.validate("0__bad_var_11_xx_1"));
         assertFalse(rule.validate("0__bad_var_11_xx_1"));
         for (String keyword : VarRule.NONVALUE_KEYWORDS) {
-            assertThrows(VariableError.class, () -> rule.validate(keyword, null, true, false));
-            assertFalse(rule.validate("T == 1 + " + keyword, null, true, false));
+            assertThrows(VariableError.class, () -> rule.validate(keyword, true, false));
+            assertFalse(rule.validate("T == 1 + " + keyword, true, false));
         }
     }
 

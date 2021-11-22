@@ -1,16 +1,37 @@
 package grammars;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import parser.Type;
 
+/**
+ * Our boolean grammar:
+ * <pre>
+ &lt;or_expr&gt;   ::= &lt;or_expr&gt; or &lt;and_expr&gt; | &lt;and_expr&gt;
+ &lt;and_expr&gt;  ::= &lt;and_expr&gt; and &lt;not_expr&gt; | &lt;not_expr&gt;
+ &lt;not_expr&gt;  ::= not &lt;bool_root&gt; | &lt;bool_root&gt; | &lt;comparison&gt;
+ &lt;bool_root&gt; ::= &lt;boolean&gt; | (&lt;or_expr&gt;)
+ &lt;boolean&gt;   ::= T | F
+ * </pre>
+ * The above lines will render correctly in a browser (JavaDoc), but look
+ * terrible in source code. See this Grammar's constructor for a more readable
+ * grammar in source code.
+ */
 public class BoolGrammar extends Grammar {
 
     /**
-     * BooleanGrammar depends on MathGrammar for comparisons, so it's entrypoint
-     * *must* be provided.
+     * Constructs a boolean grammar as so:
+     * <or_expr>   ::= <or_expr> or <and_expr> | <and_expr>
+     * <and_expr>  ::= <and_expr> and <not_expr> | <not_expr>
+     * <not_expr>  ::= not <bool_root> | <bool_root> | <comparison>
+     * <bool_root> ::= <boolean> | (<or_expr>)
+     * <boolean>   ::= T | F
+     * @param mg MathGrammar which the boolean grammar depends on for arbitrary
+     *           comparisons.
+     * @param vg The VarGrammar on which all other grammars depend for making
+     *           sure that variables within expressions exist and are of the
+     *           right type.
      */
     public BoolGrammar(MathGrammar mg, VarGrammar vg) {
         super();
