@@ -12,9 +12,9 @@ public class VariableError extends ParseError {
 
     public String toString() {
         if (lineNumber > 0) {
-            return String.format("Variable error at line %d: %s", lineNumber, message);
+            return String.format("\nVariableError at line %d: %s", lineNumber, message);
         } else {
-            return message;
+            return "\nVariableError: " + message;
         }
     }
 }

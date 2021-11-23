@@ -1,43 +1,6 @@
-? Project 2 - Design a language
-? Group Members: Danilo Hidalgo and Christian Trejo
-? File: Program4.txt
-? Purpose: Print a diamond out of asterisks given a width.
-? Arguments: Integer maxstars
-? Parsing Error:
-
-let maxstars = argos[0]                ? Number of stars to print in middle row
-
-if maxstars mod 2 == 0:                    ? Make number of stars odd
-    maxstars = maxstars + 1
-
-let spaces = (maxstars - 1)/2          ? Spaces on each side
-let middleRow = (maxstars/2) + 1       ? Middle row == ceil(maxstars/2)
-let stars = 1                          ? Current number of stars
-
-? Printing top triangle including middle row
-for i in 0..middleRow:                 ? Printing top half of the diamond, including middle row
-    for x in 0..spaces:                ? Spaces on left side
-        out(" ")
-
-    for x in 0..stars:                 ? Stars
-        out("*")
-    stars = stars + 2
-
-    spaces = spaces - 1
-    outln()
-
-? Printing bottom triangle excluding middle row
-let bottomRow = middleRow - 1
-spaces = 1
-stars = maxstars - 2
-
-for i in 0..bottomRow:                 ? Printing bottom half of the diamond
-    for x in 0..spaces:                ? Spaces on left side
-        out(" ")
-
-    for x in 0..stars:                 ? Stars
-        out("*")
-    stars = stars - 2
-
-    spaces = spaces + 1
-    outln()
+let one = 1
+let two = 2
+let three = 3
+let four = 5
+let intArr = [one, two, three, four, 5]
+intArr[2] = "3"  ? fails because intArr is known to contain ints.

@@ -7,5 +7,6 @@ else
     javaFile=$(echo "$out" | tail -n 1)
     y=${javaFile%.java}
     javaExec=${y##*/}
-    javac "$javaFile" && java "$javaExec" "$3"
+    javac "$javaFile" && java "$javaExec" "$3" "$4" "$5" "$6"
+    # just don't pass more than 4 args to the file if you're gonna use this script lol
 fi

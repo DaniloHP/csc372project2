@@ -272,7 +272,9 @@ let arr = i{100}
             //validation because it doesn't check types.
             throw new IllegalArgumentException("Only use this function with scalar types");
         } else {
-            typeToGrammar(expected).validate(expression);
+            if (!typeToGrammar(expected).validate(expression)) {
+                throw new TypeError(format("Expected expression `{0}` to be of type {1}", expression, expected.javaType));
+            }
         }
     }
 
@@ -450,7 +452,7 @@ let arr = i{100}
         Map<String, Variable> curScope = scopes.peek();
         if (curScope.containsKey(varName)) {
             throw new VariableError(
-                format("Variable `{0}`is already defined in this scope.", varName),
+                format("Variable `{0}` is already defined in this scope.", varName),
                 line.lineNum
             );
         }
@@ -682,15 +684,15 @@ for i in 1..10:
             .append("for(int ")
             .append(loopVar)
             .append(" = ")
-            .append(lo)
+            .append(finalReplacements(lo, Type.INT))
             .append("; ")
             .append(loopVar)
             .append(" < ")
-            .append(hi)
+            .append(finalReplacements(hi, Type.INT))
             .append("; ")
             .append(loopVar)
             .append(" += ")
-            .append(step)
+            .append(finalReplacements(step, Type.INT))
             .append(") ");
     }
 
