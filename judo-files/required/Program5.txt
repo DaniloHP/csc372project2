@@ -1,34 +1,3 @@
-? Project 2 - Design a language
-? Group Members: Danilo Hidalgo and Christian Trejo
-? File: Program5.txt
-? Purpose: Print a mxn checkerboard using the pound sign #
-? Arguments: Integers m and n
-? Parsing Error:
-
-let m = argos[0]        ? Rows
-let n = argos[1]        ? Columns
-
-out(" ")
-for i in 0..n:              ? Top border
-    out("_")
-outln()
-
-for i in 0..m:              ? Each Row
-    out("|")
-    for j in 0..n:              ? Each Column
-        if i mod 2 == 0:            ? Even row
-            if j mod 2 == 0:            ? Even col - print #
-                out("#")
-            else:                       ? Odd col - print " "
-                out(" ")
-        else:                       ? Odd row
-            if j mod 2 == 0:            ? Even col - print " "
-                out(" ")
-            else:                       ? Odd col - print #
-                out("#")
-    outln("|")
-
-out(" ")
-for i in 0..n:              ? Bottom border
-    out("-")
-outln()
+for i in 1 + 1 * 100..100 mod 100 + 100[1+2+3+4]:  ? although not very readable, this validates
+    let i = 10  ? This does not validate because i is already defined in this scope
+    hallpass

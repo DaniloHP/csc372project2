@@ -1,6 +1,6 @@
 # Judo: Java Pseudocode
 
-Judo is a simple, readable language that targets Java 1.8. It's strongly typed and determines types through type inference.
+Judo is a simple, whitespace sensitive, readable language that targets Java 1.8. It's strongly typed through type inference.
 ```text
 for i in 1..100:
     if i mod 15 == 0:
@@ -16,25 +16,28 @@ The Translator also only requires Java 1.8 to run. Due to the scope of the proje
 Before running, make sure you have at least Java 1.8 by running:
 ```shell
 $ java -version
-```
-The output will vary depending on your JDK implementation, but we want to see `1.8.*` somewhere in there.
+openjdk version "1.8.0_302"
+OpenJDK Runtime Environment (build 1.8.0_302-b08)
+OpenJDK 64-Bit Server VM (build 25.302-b08, mixed mode)
 
-To run the Judo translator, execute the JAR we provided like so:
+```
+The output will vary depending on your JDK implementation, but we want to see at least `1.8.*` somewhere in there.
+
+To run the Judo translator, execute the JAR we provided. If the translation is successful, the translator will tell you where it outputted the Java file as an absolute path.
 ```shell
-$ java -jar path/to/jar path/to/judo/file  
-# judot will tell you where it saved the translated java file.
-# Run it like a normal Java file:
-$ javac path/to/java/file.java  # don't forget .java here
-$ java path/to/java/file  # no .java here
+$ java -jar path/to/jar path/to/judo/file
+Java file successfully outputted to:
+/.../.../Whatever.java
+$ javac /.../.../Whatever.java  # Run it like a normal Java file. Don't forget .java here
+$ java /.../.../Whatever  # no .java here
 ```
 Or, we provided a [convenience script](https://github.com/DaniloHP/csc372project2/tree/main/judot) which is used like so:
 ```shell
 $ ./judot path/to/jar path/to/judo/file judo file arguments
 ```
-For example, to run our program 4 from the root of the repository:
+For example, to run one of our test programs from the root of the repository:
 ```shell
-$ ./judot jar/judot.jar judo-files/required/Program4.txt 10
-
+$ ./judot jar/judot.jar judo-files/valid/Stars.txt 10
    *
   ***
  *****
@@ -43,7 +46,7 @@ $ ./judot jar/judot.jar judo-files/required/Program4.txt 10
   ***
    *
 ```
-Our program 4 creates a star triangle. If the Judo file translates correctly, you should just see the Java file's output like above.
+Our program `Stars` creates a star triangle. If the Judo file translates successfully, you should just see the Java file's output like above.
 # For Graders
 Our programs 1-5 are in [`/judo-files/required/`](https://github.com/DaniloHP/csc372project2/tree/main/judo-files/required).
 

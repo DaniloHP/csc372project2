@@ -8,9 +8,9 @@ public class IndentationError extends ParseError {
 
     public String toString() {
         if (lineNumber > 0) {
-            return String.format("Indentation error at line %d: %s", lineNumber, message);
+            return String.format("\nIndentationError at line %d: %s", lineNumber, message);
         } else {
-            return message;
+            return "\nIndentationError: " + message;
         }
     }
 }

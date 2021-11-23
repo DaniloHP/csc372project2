@@ -146,7 +146,7 @@ public class ParserTests {
 
     @Test
     void testProgram3() {
-        final Parser p = new Parser("judo-files/required/Program3.txt");
+        final Parser p = new Parser("judo-files/valid/Fibonacci.txt");
         String className = "TestProgram3";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -154,7 +154,7 @@ public class ParserTests {
 
     @Test
     void testProgram4() {
-        final Parser p = new Parser("judo-files/required/Program4.txt");
+        final Parser p = new Parser("judo-files/valid/Stars.txt");
         String className = "TestProgram4";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -162,7 +162,7 @@ public class ParserTests {
 
     @Test
     void testProgram5() {
-        final Parser p = new Parser("judo-files/required/Program5.txt");
+        final Parser p = new Parser("judo-files/valid/Checkerboard.txt");
         String className = "TestProgram5";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
