@@ -33,7 +33,7 @@ $ java /.../.../Whatever  # no .java here
 ```
 Or, we provided a [convenience script](https://github.com/DaniloHP/csc372project2/tree/main/judot) which is used like so:
 ```shell
-$ ./judot path/to/jar path/to/judo/file judo file arguments
+$ ./judot path/to/jar path/to/judo/file judo_file_arguments
 ```
 Remember to mark the script as executable using `chmod`. To run one of our test programs from the root of the repository:
 ```shell
