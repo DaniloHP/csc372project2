@@ -52,7 +52,7 @@ If the Judo file translates successfully, you should just see the Java file's ou
 As we built unit tests for the project, we amassed a collection of working Judo files in `/testing-judo-files/valid`. Included among these are `Stars.txt`, `Fibonacci.txt` and `Checkerboard.txt`, which are larger programs which do interesting things. For example, the output of `Stars.txt` is shown in the example above.
 
 # For Graders
-Our programs 1-5 are in [`/judo-files/required/`](https://github.com/DaniloHP/csc372project2/tree/main/judo-files/required).
+Our programs 1-5, grammar, and presentation are in [`/required/`](https://github.com/DaniloHP/csc372project2/tree/main/required).
 
 I know the expression validation logic might be a little obscure, so this is meant to be a visual explanation of how it works, using the `toCheck = "3 + x * 2"`:
 
