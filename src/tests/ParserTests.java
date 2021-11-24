@@ -45,7 +45,7 @@ public class ParserTests {
         System.out.println("<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>");
         System.out.println("<! Make sure you're using Java 8 to test !>");
         System.out.println("<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>");
-        final Parser p = new Parser("judo-files/valid/assign.judo");
+        final Parser p = new Parser("testing-judo-files/valid/assign.judo");
         String className = "TestAssignments";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -53,7 +53,7 @@ public class ParserTests {
 
     @Test
     void testLoops() {
-        final Parser p = new Parser("judo-files/valid/loops.judo");
+        final Parser p = new Parser("testing-judo-files/valid/loops.judo");
         String className = "TestLoops";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -61,7 +61,7 @@ public class ParserTests {
 
     @Test
     void testIfs() {
-        final Parser p = new Parser("judo-files/valid/ifs.judo");
+        final Parser p = new Parser("testing-judo-files/valid/ifs.judo");
         String className = "TestIfs";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -69,7 +69,7 @@ public class ParserTests {
 
     @Test
     void testRays() {
-        final Parser p = new Parser("judo-files/valid/rays.judo");
+        final Parser p = new Parser("testing-judo-files/valid/rays.judo");
         String className = "TestRays";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -77,7 +77,7 @@ public class ParserTests {
 
     @Test
     void testIndexing() {
-        final Parser p = new Parser("judo-files/valid/indexing.judo");
+        final Parser p = new Parser("testing-judo-files/valid/indexing.judo");
         String className = "TestIndexing";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -85,7 +85,7 @@ public class ParserTests {
 
     @Test
     void testReplacement() {
-        final Parser p = new Parser("judo-files/valid/replacement.judo");
+        final Parser p = new Parser("testing-judo-files/valid/replacement.judo");
         String className = "TestReplacement";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -93,7 +93,7 @@ public class ParserTests {
 
     @Test
     void testRayInit() {
-        final Parser p = new Parser("judo-files/valid/rayinit.judo");
+        final Parser p = new Parser("testing-judo-files/valid/rayinit.judo");
         String className = "TestRayInit";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -101,7 +101,7 @@ public class ParserTests {
 
     @Test
     void testGeneral() {
-        final Parser p = new Parser("judo-files/valid/general.judo");
+        final Parser p = new Parser("testing-judo-files/valid/general.judo");
         String className = "TestGeneral";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -109,28 +109,28 @@ public class ParserTests {
 
     @Test
     void testTypeErrors() {
-        final Parser p = new Parser("judo-files/invalid/badtypereassign.judo");
+        final Parser p = new Parser("testing-judo-files/invalid/badtypereassign.judo");
         String className = "Test";
         assertThrows(TypeError.class, () -> p.parseFull(className));
     }
 
     @Test
     void testStatementErrors() {
-        final Parser p = new Parser("judo-files/invalid/badprint.judo");
+        final Parser p = new Parser("testing-judo-files/invalid/badprint.judo");
         String className = "TestBadPrint";
         assertThrows(InvalidStatementError.class, () -> p.parseFull(className));
     }
 
     @Test
     void testVariableErrors() {
-        final Parser p = new Parser("judo-files/invalid/reserved.judo");
+        final Parser p = new Parser("testing-judo-files/invalid/reserved.judo");
         String className = "TestBadPrint";
         assertThrows(VariableError.class, () -> p.parseFull(className));
     }
 
     @Test
     void testProgram1() {
-        final Parser p = new Parser("judo-files/required/Program1.txt");
+        final Parser p = new Parser("required/Program1.txt");
         String className = "TestProgram1";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -138,7 +138,7 @@ public class ParserTests {
 
     @Test
     void testProgram2() {
-        final Parser p = new Parser("judo-files/required/Program2.txt");
+        final Parser p = new Parser("required/Program2.txt");
         String className = "TestProgram2";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -146,7 +146,7 @@ public class ParserTests {
 
     @Test
     void testProgram3() {
-        final Parser p = new Parser("judo-files/valid/Fibonacci.txt");
+        final Parser p = new Parser("testing-judo-files/valid/Fibonacci.txt");
         String className = "TestProgram3";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -154,7 +154,7 @@ public class ParserTests {
 
     @Test
     void testProgram4() {
-        final Parser p = new Parser("judo-files/valid/Stars.txt");
+        final Parser p = new Parser("testing-judo-files/valid/Stars.txt");
         String className = "TestProgram4";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);
@@ -162,7 +162,7 @@ public class ParserTests {
 
     @Test
     void testProgram5() {
-        final Parser p = new Parser("judo-files/valid/Checkerboard.txt");
+        final Parser p = new Parser("testing-judo-files/valid/Checkerboard.txt");
         String className = "TestProgram5";
         String code = p.parseFull(className);
         runGeneratedJava(code, className);

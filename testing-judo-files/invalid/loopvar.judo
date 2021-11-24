@@ -1,0 +1,5 @@
+let strs = ["a", "b","c"]
+let ints = [1,2,3]
+for s in strs:
+    out(ints[s])
+    let a = ints[s]

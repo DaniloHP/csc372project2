@@ -712,7 +712,7 @@ for element in array:
         String loopVar = m.group("loopVar");
         Type rayType = scopes.find(m.group("array")).type;
         scopes.pushNewScope();
-        scopes.addToCurrScope(loopVar, new Variable(loopVar, rayType));
+        scopes.addToCurrScope(loopVar, new Variable(loopVar, rayType.listOf));
         java
             .append("for(")
             .append(rayType.listOf)

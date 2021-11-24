@@ -1,4 +1,0 @@
-let bool1 = T
-let bool2 = T or F and bool1
-if bool1 or bool2 and F  ? Our language requires colons after statements
-    out("This won't print")
