@@ -35,9 +35,9 @@ Or, we provided a [convenience script](https://github.com/DaniloHP/csc372project
 ```shell
 $ ./judot path/to/jar path/to/judo/file judo file arguments
 ```
-For example, to run one of our test programs from the root of the repository:
+Remember to mark the script as executable using `chmod`. To run one of our test programs from the root of the repository:
 ```shell
-$ ./judot jar/judot.jar judo-files/valid/Stars.txt 10
+$ ./judot jar/judot.jar testing-judo-files/valid/Stars.txt 10
    *
   ***
  *****
